@@ -12,7 +12,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
-    # Use Ollama's default entrypoint - more reliable
 
   webapp:
     build: .
@@ -23,13 +22,13 @@ services:
       - OPENAI_BASE_URL=http://ollama:11434/v1
       - OPENAI_API_KEY=ollama
       - OLLAMA_HOST=http://ollama:11434
-      - MODEL_NAME=deepseek-r1:1.5b
+      - MODEL_NAME=qwen2.5:1.5b
+      - OLLAMA_TIMEOUT=120.0
       - PYTHONUNBUFFERED=1
       - STREAMLIT_LOGGER_LEVEL=debug
     depends_on:
       ollama:
         condition: service_started
-    # Volume mount removed due to Docker Desktop file sharing permissions
     # IMPORTANT: Code is copied into image during build, not mounted as volume
     # To update code: Run ./update_code.sh OR: docker compose build --no-cache webapp && docker compose up -d webapp
     command: streamlit run app.py --server.port=8501 --server.address=0.0.0.0 --logger.level=debug
@@ -37,4 +36,3 @@ services:
 volumes:
   ollama_data:
     driver: local
-

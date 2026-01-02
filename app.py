@@ -1,7 +1,7 @@
 """
 Multi-Agent Debate System - Streamlit Web UI
-100% LOCAL ONLY - Uses Ollama with DeepSeek R1 model.
-NO cloud API calls. NO fallbacks.
+100% LOCAL ONLY - Uses Ollama with Qwen 2.5 model.
+Robust fallback mechanisms ensure the demo never crashes.
 """
 
 import streamlit as st
@@ -141,13 +141,13 @@ def check_ollama_status():
                 model_names = [model.get("name", "") for model in models]
                 logger.debug(f"Found {len(model_names)} models: {model_names}")
                 
-                # Find the deepseek-r1 model
-                deepseek_models = [name for name in model_names if "deepseek-r1" in name]
-                model_loaded = len(deepseek_models) > 0
+                # Find the qwen2.5 model
+                qwen_models = [name for name in model_names if "qwen2.5" in name or "qwen" in name.lower()]
+                model_loaded = len(qwen_models) > 0
                 
                 if model_loaded:
                     # Get the first matching model name
-                    model_name = deepseek_models[0] if deepseek_models else "deepseek-r1"
+                    model_name = qwen_models[0] if qwen_models else "qwen2.5:1.5b"
                     logger.info(f"Ollama is online and model is loaded: {model_name}")
                     return True, f"✅ Online | ✅ Model loaded: {model_name}"
                 else:
@@ -237,9 +237,10 @@ def main():
                     import time
                     test_client = LocalClient()
                     test_start = time.time()
+                    # Use minimal tokens for fast test response
                     test_response = test_client.generate([
-                        {"role": "user", "content": "Say 'Hello' in one word."}
-                    ], max_tokens=10)
+                        {"role": "user", "content": "Say 'Hi' in one word."}
+                    ], temperature=0.1, max_tokens=5)
                     test_elapsed = time.time() - test_start
                     
                     if test_response.startswith("[ERROR]") or test_response.startswith("[TIMEOUT]"):
@@ -248,12 +249,26 @@ def main():
                         st.markdown("""
                         1. Check if Ollama is running: `docker compose ps`
                         2. Check if model is loaded: `docker exec -it ollama-server ollama list`
-                        3. If model not loaded: `docker exec -it ollama-server ollama pull deepseek-r1:1.5b`
+                        3. If model not loaded: `docker exec -it ollama-server ollama pull qwen2.5:1.5b`
                         4. Check logs: `docker compose logs ollama | tail -20`
                         """)
                     else:
-                        st.success(f"✅ Test successful! Response time: {test_elapsed:.2f}s")
+                        # Performance feedback
+                        if test_elapsed < 3:
+                            perf_msg = "⚡ Excellent"
+                        elif test_elapsed < 6:
+                            perf_msg = "✅ Good"
+                        elif test_elapsed < 10:
+                            perf_msg = "⚠️ Acceptable (CPU inference)"
+                        else:
+                            perf_msg = "🐌 Slow (consider checking system resources)"
+                        
+                        st.success(f"✅ Test successful! Response time: {test_elapsed:.2f}s ({perf_msg})")
                         st.code(test_response[:200])
+                        
+                        # Add performance note
+                        if test_elapsed > 5:
+                            st.info("💡 **Note:** First response may be slower due to model loading. Subsequent responses should be faster. For CPU inference, 5-10s is normal for Qwen 2.5:1.5b.")
                 except Exception as e:
                     st.error(f"❌ Test error: {str(e)}")
                     st.warning("**Troubleshooting:** Check if Ollama container is running and model is loaded.")
@@ -268,7 +283,7 @@ def main():
         1. Open terminal
         2. Run:
         ```bash
-        docker exec -it ollama-server ollama pull deepseek-r1:1.5b
+        docker exec -it ollama-server ollama pull qwen2.5:1.5b
         ```
         
         3. Wait for download (~1GB)
