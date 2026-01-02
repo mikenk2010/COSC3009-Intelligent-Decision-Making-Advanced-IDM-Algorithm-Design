@@ -204,10 +204,19 @@ Focus on mathematical correctness above all else.
 
 ### 4.1 Experimental Setup
 
-**Dataset:** GSM8K (Grade School Math 8K)
-- 8,500 mathematical word problems
+**Dataset:** Test problems from the system's preset collection
+- 3 mathematical word problems with known correct answers
 - Requires multi-step reasoning
-- Standard benchmark for reasoning evaluation
+- Problems cover multiplication, money calculations, and subtraction
+
+**Note:** The results presented below are **synthetic/expected results** based on the research hypothesis. To collect actual experimental data, run:
+```bash
+./run_experiments.sh
+```
+Then update the report with:
+```bash
+python update_report_with_results.py
+```
 
 **Experimental Conditions:**
 - **Standard Debate:** 2 agents, peer-to-peer critique, 3 rounds
@@ -216,6 +225,8 @@ Focus on mathematical correctness above all else.
 - **Temperature:** Agents at 0.7, Judge at 0.3
 
 ### 4.2 Comparative Analysis
+
+**Note:** The following table shows **expected/synthetic results** based on research hypothesis. Actual experimental results may vary. See `EXPERIMENT_INSTRUCTIONS.md` for how to collect real data.
 
 | Metric | Standard Debate | Mediated Debate | Improvement |
 |--------|----------------|-----------------|-------------|

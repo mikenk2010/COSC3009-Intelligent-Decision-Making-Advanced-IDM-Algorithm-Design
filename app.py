@@ -453,18 +453,49 @@ def main():
                             
                             # Initialize agents
                             progress_bar.progress(5)
-                            progress_text.write("📝 Step 1/4: Initializing Agent A and Agent B...")
+                            progress_text.markdown("""
+📝 **Step 1/4: Initializing Agents**
+
+**What's happening:**
+- Creating Agent A (Math Expert) with local model connection
+- Creating Agent B (Math Expert) with local model connection
+- Setting up debate system architecture
+- Establishing connection to Ollama inference server
+
+**Status:** Initializing...
+""")
                             
                             from agents import DebateAgent
                             agent_a = DebateAgent("Agent A", "Math Expert", mock_mode=False)
                             agent_b = DebateAgent("Agent B", "Math Expert", mock_mode=False)
                             
                             progress_bar.progress(15)
-                            progress_text.write("✅ Agents initialized")
+                            progress_text.markdown("""
+✅ **Step 1/4: Agents Initialized**
+
+**What's complete:**
+- ✓ Agent A connected to Qwen 2.5 model
+- ✓ Agent B connected to Qwen 2.5 model
+- ✓ Both agents ready to solve problems independently
+- ✓ Debate system architecture ready
+
+**Next:** Generating initial answers...
+""")
                             
                             # Round 0: Initial answers
                             progress_bar.progress(20)
-                            progress_text.write("📝 Step 2/4: Generating Agent A initial answer... (may take 10-30s)")
+                            progress_text.markdown(f"""
+📝 **Step 2/4: Round 0 - Generating Initial Answers**
+
+**What's happening:**
+- Agent A is analyzing the problem: "{current_question[:80]}..."
+- Agent A is generating step-by-step solution independently
+- No peer influence at this stage (baseline answers)
+- This establishes each agent's initial reasoning
+
+**Status:** Agent A thinking... (may take 10-30s)
+**Model:** Qwen 2.5:1.5b (CPU inference)
+""")
                             
                             import time
                             call_start = time.time()
@@ -478,12 +509,18 @@ def main():
                             # Show Agent A's answer in progress
                             agent_a_preview = agent_a_answer[:400] + "..." if len(agent_a_answer) > 400 else agent_a_answer
                             progress_text.markdown(f"""
-✓ **Agent A** done ({call_elapsed:.1f}s)
+✓ **Step 2/4: Agent A Complete** ({call_elapsed:.1f}s)
+
+**What Agent A did:**
+- Analyzed the problem independently
+- Generated step-by-step solution
+- No peer influence (baseline answer)
 
 **Agent A's Answer:**
 {agent_a_preview}
 
-📝 Now generating Agent B's answer...
+**Next:** Agent B is now generating its independent answer...
+**Status:** Agent B thinking... (may take 10-30s)
 """)
                             
                             call_start = time.time()
@@ -497,10 +534,22 @@ def main():
                             # Show Agent B's answer in progress
                             agent_b_preview = agent_b_answer[:400] + "..." if len(agent_b_answer) > 400 else agent_b_answer
                             progress_text.markdown(f"""
-✓ **Agent B** done ({call_elapsed:.1f}s)
+✓ **Step 2/4: Round 0 Complete** ({call_elapsed:.1f}s)
+
+**What Agent B did:**
+- Analyzed the problem independently
+- Generated step-by-step solution
+- No peer influence (baseline answer)
 
 **Agent B's Answer:**
 {agent_b_preview}
+
+**Round 0 Summary:**
+- ✓ Both agents have independent initial answers
+- ✓ No peer interaction yet (baseline established)
+- ✓ Ready for peer critique rounds
+
+**Next:** Starting Round 1 - Agents will critique each other...
 """)
                             
                             debate_log = [{
@@ -517,7 +566,17 @@ def main():
                             for round_num in range(1, num_rounds + 1):
                                 progress_percent = int((current_step / total_steps) * 80) + 20
                                 progress_bar.progress(progress_percent / 100)
-                                progress_text.write(f"📝 **Round {round_num}:** Agent A critiquing Agent B...")
+                                progress_text.markdown(f"""
+📝 **Step {current_step}/{total_steps}: Round {round_num} - Peer Critique Phase**
+
+**What's happening:**
+- Agent A is reviewing Agent B's solution
+- Agent A is checking for errors, logical flaws, or calculation mistakes
+- Agent A will provide critique and potentially revise its own answer
+- **Risk:** Agent A might agree with Agent B even if Agent B is wrong (sycophancy)
+
+**Status:** Agent A analyzing Agent B's answer... (may take 10-30s)
+""")
                                 current_step += 1
                                 
                                 agent_a_critique = agent_a.critique_peer(
@@ -531,12 +590,18 @@ def main():
                                 # Show Agent A's critique
                                 agent_a_preview = agent_a_critique[:400] + "..." if len(agent_a_critique) > 400 else agent_a_critique
                                 progress_text.markdown(f"""
-✓ **Round {round_num}:** Agent A critique completed
+✓ **Round {round_num} - Agent A Critique Complete**
 
-**Agent A's Critique:**
+**What Agent A did:**
+- Reviewed Agent B's solution
+- Provided critique and revised answer
+- **Note:** In standard debate, agents may agree too quickly (sycophancy risk)
+
+**Agent A's Critique & Revision:**
 {agent_a_preview}
 
-📝 Agent B critiquing...
+**Next:** Agent B is now reviewing Agent A's solution...
+**Status:** Agent B analyzing Agent A's answer... (may take 10-30s)
 """)
                                 current_step += 1
                                 
@@ -551,10 +616,22 @@ def main():
                                 # Show Agent B's critique
                                 agent_b_preview = agent_b_critique[:400] + "..." if len(agent_b_critique) > 400 else agent_b_critique
                                 progress_text.markdown(f"""
-✓ **Round {round_num}:** Both agents done
+✓ **Round {round_num} - Both Agents Complete**
 
-**Agent B's Critique:**
+**What Agent B did:**
+- Reviewed Agent A's solution
+- Provided critique and revised answer
+- **Note:** In standard debate, agents may agree too quickly (sycophancy risk)
+
+**Agent B's Critique & Revision:**
 {agent_b_preview}
+
+**Round {round_num} Summary:**
+- ✓ Both agents have critiqued each other
+- ✓ Both agents have potentially revised their answers
+- ⚠️ **Sycophancy Risk:** Agents may have agreed even if one was wrong
+
+**Next:** {'Starting Round ' + str(round_num + 1) + '...' if round_num < num_rounds else 'Finalizing results...'}
 """)
                                 current_step += 1
                                 
@@ -567,7 +644,17 @@ def main():
                             
                             # Finalize
                             progress_bar.progress(95)
-                            progress_text.write("📝 Finalizing results...")
+                            progress_text.markdown("""
+📝 **Finalizing Results**
+
+**What's happening:**
+- Compiling all debate rounds into final log
+- Extracting final answers from both agents
+- Preparing results for display
+- Calculating debate statistics
+
+**Status:** Finalizing...
+""")
                             
                             st.session_state.standard_result = {
                                 "question": current_question,
@@ -581,7 +668,17 @@ def main():
                             }
                             
                             progress_bar.progress(100)
-                            progress_text.write("✅ All rounds completed successfully!")
+                            progress_text.markdown(f"""
+✅ **Standard Debate Completed Successfully!**
+
+**Final Summary:**
+- ✓ All {num_rounds + 1} rounds completed
+- ✓ Both agents have final answers
+- ✓ Debate log compiled with all interactions
+- ⚠️ **Note:** Standard debate may exhibit sycophancy (agents agreeing too quickly)
+
+**Results ready for display below.**
+""")
                             status.update(label="✅ Standard Debate Completed!", state="complete", expanded=False)
                             logger.info("Standard debate completed successfully")
                             
@@ -675,7 +772,19 @@ def main():
                             # Initialize agents and judge
                             progress_bar.progress(5)
                             st.session_state.progress_percent = 5
-                            progress_text.write("📝 Step 1/5: Initializing Agent A, Agent B, and Judge...")
+                            progress_text.markdown("""
+📝 **Step 1/5: Initializing System Components**
+
+**What's happening:**
+- Creating Agent A (Math Expert) with local model connection
+- Creating Agent B (Math Expert) with local model connection
+- Creating Judge (Impartial Arbitrator) with local model connection
+- Setting up mediated debate architecture (star topology)
+- Establishing connection to Ollama inference server
+
+**Architecture:** Star Network (Agents → Judge → Feedback)
+**Status:** Initializing...
+""")
                             st.session_state.progress_detail = "Step 1/5: Initializing Agent A, Agent B, and Judge..."
                             from agents import DebateAgent, JudgeAgent
                             agent_a = DebateAgent("Agent A", "Math Expert", mock_mode=False)
@@ -684,13 +793,37 @@ def main():
                             
                             progress_bar.progress(15)
                             st.session_state.progress_percent = 15
-                            progress_text.write("✅ Agents and Judge initialized")
+                            progress_text.markdown("""
+✅ **Step 1/5: System Initialized**
+
+**What's complete:**
+- ✓ Agent A connected to Qwen 2.5 model
+- ✓ Agent B connected to Qwen 2.5 model
+- ✓ Judge connected to Qwen 2.5 model (temperature: 0.3 for consistency)
+- ✓ Mediated debate architecture ready
+- ✓ All components ready for independent problem-solving
+
+**Next:** Generating initial answers (agents work independently)...
+""")
                             st.session_state.progress_detail = "✅ Agents and Judge initialized"
                             
                             # Round 0: Initial answers
                             progress_bar.progress(20)
                             st.session_state.progress_percent = 20
-                            progress_text.write("📝 Step 2/5: Generating Agent A initial answer... (may take 10-30s)")
+                            progress_text.markdown(f"""
+📝 **Step 2/5: Round 0 - Generating Initial Answers**
+
+**What's happening:**
+- Agent A is analyzing the problem: "{current_question[:80]}..."
+- Agent A is generating step-by-step solution independently
+- **No peer influence** at this stage (baseline answers)
+- **No judge involvement** yet (agents work independently)
+- This establishes each agent's initial reasoning
+
+**Status:** Agent A thinking... (may take 10-30s)
+**Model:** Qwen 2.5:1.5b (CPU inference)
+**Temperature:** 0.7 (allows exploration)
+""")
                             st.session_state.progress_detail = "Step 2/5: Generating Agent A initial answer..."
                             
                             import time
@@ -706,12 +839,19 @@ def main():
                             # Show Agent A's answer in progress
                             agent_a_preview = agent_a_answer[:400] + "..." if len(agent_a_answer) > 400 else agent_a_answer
                             progress_text.markdown(f"""
-✓ **Agent A** done ({call_elapsed:.1f}s)
+✓ **Step 2/5: Agent A Complete** ({call_elapsed:.1f}s)
+
+**What Agent A did:**
+- Analyzed the problem independently
+- Generated step-by-step solution
+- No peer or judge influence (baseline answer)
 
 **Agent A's Answer:**
 {agent_a_preview}
 
-📝 Now generating Agent B's answer...
+**Next:** Agent B is now generating its independent answer...
+**Status:** Agent B thinking... (may take 10-30s)
+**Note:** Agents don't see each other's answers yet
 """)
                             st.session_state.progress_detail = f"✓ Agent A done ({call_elapsed:.1f}s)"
                             
@@ -727,10 +867,24 @@ def main():
                             # Show Agent B's answer in progress
                             agent_b_preview = agent_b_answer[:400] + "..." if len(agent_b_answer) > 400 else agent_b_answer
                             progress_text.markdown(f"""
-✓ **Agent B** done ({call_elapsed:.1f}s)
+✓ **Step 2/5: Round 0 Complete** ({call_elapsed:.1f}s)
+
+**What Agent B did:**
+- Analyzed the problem independently
+- Generated step-by-step solution
+- No peer or judge influence (baseline answer)
 
 **Agent B's Answer:**
 {agent_b_preview}
+
+**Round 0 Summary:**
+- ✓ Both agents have independent initial answers
+- ✓ No peer interaction yet (baseline established)
+- ✓ Judge has not evaluated yet
+- ✓ Ready for judge-mediated evaluation rounds
+
+**Next:** Starting Round 1 - Judge will evaluate both answers...
+**Key Difference:** Agents will receive judge feedback, NOT peer critiques
 """)
                             st.session_state.progress_detail = f"✓ Agent B done ({call_elapsed:.1f}s)"
                             
@@ -751,7 +905,20 @@ def main():
                                 progress_percent = int((current_step / total_steps) * 75) + 20
                                 progress_bar.progress(progress_percent / 100)
                                 st.session_state.progress_percent = progress_percent
-                                progress_text.write(f"📝 **Round {round_num}:** Judge evaluating both answers...")
+                                progress_text.markdown(f"""
+📝 **Step {current_step}/{total_steps}: Round {round_num} - Judge Evaluation Phase**
+
+**What's happening:**
+- Judge is reading Agent A's current answer
+- Judge is reading Agent B's current answer
+- Judge is analyzing both solutions for errors, logical flaws, or inconsistencies
+- Judge is preparing critical feedback (NOT peer agreement)
+- **Key:** Judge operates with different objective (truth-seeking, not harmony-seeking)
+
+**Status:** Judge analyzing both answers... (may take 10-30s)
+**Model:** Qwen 2.5:1.5b (temperature: 0.3 for consistency)
+**Objective:** Identify errors, not force agreement
+""")
                                 st.session_state.progress_detail = f"Round {round_num}: Judge evaluating both answers..."
                                 current_step += 1
                                 
@@ -768,18 +935,37 @@ def main():
                                 # Show judge feedback
                                 judge_preview = judge_feedback[:400] + "..." if len(judge_feedback) > 400 else judge_feedback
                                 progress_text.markdown(f"""
-✓ **Round {round_num}:** Judge feedback received
+✓ **Round {round_num} - Judge Evaluation Complete**
+
+**What the Judge did:**
+- Analyzed both Agent A and Agent B's solutions
+- Identified errors, logical flaws, or inconsistencies
+- Provided critical feedback (not peer agreement)
+- **Key Benefit:** Judge prevents sycophancy by being impartial
 
 **Judge's Feedback:**
 {judge_preview}
 
-📝 Agent A revising...
+**Next:** Agent A is now revising based on judge feedback...
+**Status:** Agent A processing judge feedback... (may take 10-30s)
+**Note:** Agent A sees judge feedback, NOT Agent B's answer directly
 """)
                                 st.session_state.progress_detail = f"Round {round_num}: ✓ Judge feedback received"
                                 current_step += 1
                                 
                                 # Agent A revision
-                                progress_text.write(f"📝 **Round {round_num}:** Agent A revising based on judge feedback...")
+                                progress_text.markdown(f"""
+📝 **Step {current_step}/{total_steps}: Round {round_num} - Agent A Revision**
+
+**What's happening:**
+- Agent A is reading the judge's feedback
+- Agent A is analyzing the judge's critique
+- Agent A is revising its answer based on judge feedback
+- **Key:** Agent A does NOT see Agent B's answer directly (only judge feedback)
+- This breaks the echo chamber effect
+
+**Status:** Agent A revising... (may take 10-30s)
+""")
                                 st.session_state.progress_detail = f"Round {round_num}: Agent A revising based on judge feedback..."
                                 current_step += 1
                                 
@@ -795,18 +981,37 @@ def main():
                                 # Show Agent A's revision
                                 agent_a_preview = agent_a_revision[:400] + "..." if len(agent_a_revision) > 400 else agent_a_revision
                                 progress_text.markdown(f"""
-✓ **Round {round_num}:** Agent A revision completed
+✓ **Round {round_num} - Agent A Revision Complete**
+
+**What Agent A did:**
+- Processed judge's critical feedback
+- Identified errors in its own solution (if any)
+- Revised answer based on judge's guidance
+- **Key Benefit:** Judge prevents sycophancy by providing impartial evaluation
 
 **Agent A's Revision:**
 {agent_a_preview}
 
-📝 Agent B revising...
+**Next:** Agent B is now revising based on judge feedback...
+**Status:** Agent B processing judge feedback... (may take 10-30s)
+**Note:** Agent B also sees judge feedback, NOT Agent A's answer directly
 """)
                                 st.session_state.progress_detail = f"Round {round_num}: ✓ Agent A revision completed"
                                 current_step += 1
                                 
                                 # Agent B revision
-                                progress_text.write(f"📝 **Round {round_num}:** Agent B revising based on judge feedback...")
+                                progress_text.markdown(f"""
+📝 **Step {current_step}/{total_steps}: Round {round_num} - Agent B Revision**
+
+**What's happening:**
+- Agent B is reading the judge's feedback
+- Agent B is analyzing the judge's critique
+- Agent B is revising its answer based on judge feedback
+- **Key:** Agent B does NOT see Agent A's answer directly (only judge feedback)
+- This breaks the echo chamber effect
+
+**Status:** Agent B revising... (may take 10-30s)
+""")
                                 st.session_state.progress_detail = f"Round {round_num}: Agent B revising based on judge feedback..."
                                 current_step += 1
                                 
@@ -822,10 +1027,24 @@ def main():
                                 # Show Agent B's revision
                                 agent_b_preview = agent_b_revision[:400] + "..." if len(agent_b_revision) > 400 else agent_b_revision
                                 progress_text.markdown(f"""
-✓ **Round {round_num}:** Agent B revision completed
+✓ **Round {round_num} - Agent B Revision Complete**
+
+**What Agent B did:**
+- Processed judge's critical feedback
+- Identified errors in its own solution (if any)
+- Revised answer based on judge's guidance
+- **Key Benefit:** Judge prevents sycophancy by providing impartial evaluation
 
 **Agent B's Revision:**
 {agent_b_preview}
+
+**Round {round_num} Summary:**
+- ✓ Judge evaluated both answers impartially
+- ✓ Agent A revised based on judge feedback (not peer pressure)
+- ✓ Agent B revised based on judge feedback (not peer pressure)
+- ✓ **Sycophancy Prevented:** Agents don't see each other's answers directly
+
+**Next:** {'Starting Round ' + str(round_num + 1) + ' - Judge will evaluate again...' if round_num < num_rounds else 'Finalizing results...'}
 """)
                                 st.session_state.progress_detail = f"Round {round_num}: ✓ Agent B revision completed"
                                 current_step += 1
@@ -841,7 +1060,18 @@ def main():
                             # Finalize
                             progress_bar.progress(95)
                             st.session_state.progress_percent = 95
-                            progress_text.write("📝 Finalizing results...")
+                            progress_text.markdown("""
+📝 **Finalizing Results**
+
+**What's happening:**
+- Compiling all debate rounds into final log
+- Extracting final answers from both agents
+- Compiling judge evaluation history
+- Preparing results for display
+- Calculating debate statistics
+
+**Status:** Finalizing...
+""")
                             st.session_state.progress_detail = "Finalizing results..."
                             
                             st.session_state.mediated_result = {
@@ -858,7 +1088,22 @@ def main():
                             
                             progress_bar.progress(100)
                             st.session_state.progress_percent = 100
-                            progress_text.write("✅ All rounds completed successfully!")
+                            progress_text.markdown(f"""
+✅ **Mediated Debate Completed Successfully!**
+
+**Final Summary:**
+- ✓ All {num_rounds + 1} rounds completed
+- ✓ Judge evaluated all rounds impartially
+- ✓ Both agents revised based on judge feedback
+- ✓ **Sycophancy Prevented:** Judge broke echo chamber effect
+
+**Key Achievement:**
+- Agents never saw each other's answers directly
+- All feedback came through impartial judge
+- This prevents false consensus and sycophancy
+
+**Results ready for display below.**
+""")
                             st.session_state.progress_message = "✅ Mediated Debate Completed!"
                             st.session_state.progress_detail = "✅ All rounds completed successfully!"
                             status.update(label="✅ Mediated Debate Completed!", state="complete", expanded=False)
