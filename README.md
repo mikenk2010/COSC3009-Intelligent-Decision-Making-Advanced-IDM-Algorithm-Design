@@ -2,6 +2,22 @@
 
 A Dockerized multi-agent debate system comparing **Standard Debate** (peer-to-peer) vs. **Mediated Debate** (with judge arbitrator) using local open-source LLMs via Ollama.
 
+<img width="1774" height="1029" alt="image" src="https://github.com/user-attachments/assets/581cbe7f-63c1-475c-aef9-9cfa9189aafd" />
+
+## Screenshots
+- Problem: `A coffee shop sells coffee for $2.50 per cup and tea for $1.75 per cup. If a customer buys 4 cups of coffee and 3 cups of tea, how much does the customer pay in total?`
+- Expected answer: `Answer: $15.25`
+<img width="524" height="646" alt="image" src="https://github.com/user-attachments/assets/9aa08c80-8068-4a17-9185-42489f3d2472" />
+
+- Standard Debate
+<img width="1197" height="488" alt="image" src="https://github.com/user-attachments/assets/4507d4cb-725d-4b7d-aadc-45c2f3f51e9a" />
+
+- Mediated Debate (With Judge)
+<img width="1170" height="566" alt="image" src="https://github.com/user-attachments/assets/fc05d8b6-22c8-4f6c-bea5-ffdd263c4f95" />
+
+
+
+
 ## Features
 
 - 🤖 **Local LLM Inference**: Uses Ollama with Qwen 2.5 (1.5B) - optimized for CPU and speed
