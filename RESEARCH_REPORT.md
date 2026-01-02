@@ -1,8 +1,7 @@
 # Breaking the Echo Chamber: Enhancing Multi-Agent Debate Consistency via Arbitrator Models
 
-**Author:** [Your Name]  
 **Institution:** RMIT University  
-**Course:** COSC3009 - Advanced Intelligent Decision Making  
+**Course:** COSC3009 - Advanced Intelligent Decision Making - Final Project: Advanced IDM Algorithm Design
 **Date:** 2025
 
 ---
