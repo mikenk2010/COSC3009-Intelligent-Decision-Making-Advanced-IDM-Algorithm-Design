@@ -1,0 +1,41 @@
+# Alternative docker-compose without volume mounts
+# Use this if you get volume mount permission errors
+# Usage: docker compose -f docker-compose.no-volumes.yml up -d --build
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama-server
+    volumes:
+      - ollama_data:/root/.ollama
+    ports:
+      - "11434:11434"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  webapp:
+    build: .
+    container_name: debate-webapp
+    ports:
+      - "8501:8501"
+    environment:
+      - OPENAI_BASE_URL=http://ollama:11434/v1
+      - OPENAI_API_KEY=ollama
+      - OLLAMA_HOST=http://ollama:11434
+      - MODEL_NAME=deepseek-r1:1.5b
+      - PYTHONUNBUFFERED=1
+      - STREAMLIT_LOGGER_LEVEL=debug
+    depends_on:
+      ollama:
+        condition: service_started
+    # No volume mounts - files are copied into image during build
+    command: streamlit run app.py --server.port=8501 --server.address=0.0.0.0 --logger.level=debug
+
+volumes:
+  ollama_data:
+    driver: local
+

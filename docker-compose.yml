@@ -1,0 +1,40 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama-server
+    volumes:
+      - ollama_data:/root/.ollama
+    ports:
+      - "11434:11434"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    # Use Ollama's default entrypoint - more reliable
+
+  webapp:
+    build: .
+    container_name: debate-webapp
+    ports:
+      - "8501:8501"
+    environment:
+      - OPENAI_BASE_URL=http://ollama:11434/v1
+      - OPENAI_API_KEY=ollama
+      - OLLAMA_HOST=http://ollama:11434
+      - MODEL_NAME=deepseek-r1:1.5b
+      - PYTHONUNBUFFERED=1
+      - STREAMLIT_LOGGER_LEVEL=debug
+    depends_on:
+      ollama:
+        condition: service_started
+    # Volume mount removed due to Docker Desktop file sharing permissions
+    # IMPORTANT: Code is copied into image during build, not mounted as volume
+    # To update code: Run ./update_code.sh OR: docker compose build --no-cache webapp && docker compose up -d webapp
+    command: streamlit run app.py --server.port=8501 --server.address=0.0.0.0 --logger.level=debug
+
+volumes:
+  ollama_data:
+    driver: local
+
