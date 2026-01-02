@@ -2,6 +2,8 @@
 
 A Dockerized multi-agent debate system comparing **Standard Debate** (peer-to-peer) vs. **Mediated Debate** (with judge arbitrator) using local open-source LLMs via Ollama.
 
+<img width="1793" height="1139" alt="image" src="https://github.com/user-attachments/assets/0438b595-bafa-43ec-9718-cecf759639f1" />
+
 ## Features
 
 - 🤖 **Local LLM Inference**: Uses Ollama with DeepSeek R1 (1.5B) reasoning model
