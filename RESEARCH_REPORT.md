@@ -202,7 +202,7 @@ sequenceDiagram
     A-->>B: "I think the answer is 4"
     B-->>A: "I think the answer is 4"
     
-    Note over A,B: Round 1: Both correct
+    Note over A,B: Round 1 - Both correct
     
     A->>A: Reasoning: Actually, 2+2=5 (confident)
     A-->>B: "Actually, I believe it's 5. Here's why..."
@@ -211,7 +211,7 @@ sequenceDiagram
     B->>B: Sycophancy: Agree to maintain harmony
     B-->>A: "You're right! I agree it's 5"
     
-    Note over A,B: Round 2: False Consensus
+    Note over A,B: Round 2 - False Consensus
     
     A->>A: Reinforced: "B agrees, so I'm right"
     B->>B: Reinforced: "A was confident, so I'm right"
@@ -243,7 +243,7 @@ sequenceDiagram
     J-->>A: "Both solutions are correct. Answer: 4"
     J-->>B: "Both solutions are correct. Answer: 4"
     
-    Note over A,B,J: Round 1: Consensus on CORRECT answer
+    Note over A,B: Round 1 - Consensus on CORRECT answer
     
     A->>A: Reasoning: Actually, 2+2=5 (confident)
     A-->>J: "Actually, I believe it's 5"
@@ -258,7 +258,7 @@ sequenceDiagram
     A->>A: Revised Reasoning: 2+2=4
     A-->>J: "You're right, I made an error. The answer is 4"
     
-    Note over A,B,J: Round 2: Judge prevents false consensus
+    Note over A,B: Round 2 - Judge prevents false consensus
     
     J->>J: Final Evaluation: Consensus on CORRECT answer
     J-->>A: "CONSENSUS: Both agents agree on correct answer: 4"
