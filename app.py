@@ -1,6 +1,6 @@
 """
 Multi-Agent Debate System - Streamlit Web UI
-100% LOCAL ONLY - Uses Ollama with Qwen 2.5 model.
+Hybrid Inference: OpenAI Cloud (priority) with Local Ollama fallback.
 Robust fallback mechanisms ensure the demo never crashes.
 """
 
@@ -8,8 +8,10 @@ import streamlit as st
 import os
 import logging
 import requests
+import json
 from datetime import datetime
-from agents import DebateAgent, JudgeAgent
+from pathlib import Path
+from agents import DebateAgent, JudgeAgent, SmartClient, get_inference_status, test_connection
 from simulation import run_standard_debate, run_mediated_debate, mock_debate
 
 # Configure logging for Streamlit - use logs/ subdirectory to avoid watchdog spam
@@ -29,6 +31,249 @@ logger.info("=" * 80)
 logger.info("STREAMLIT APP STARTING")
 logger.info(f"Start time: {datetime.now()}")
 logger.info("=" * 80)
+
+# History storage directory
+HISTORY_DIR = Path("debate_history")
+HISTORY_DIR.mkdir(exist_ok=True)
+STANDARD_HISTORY_DIR = HISTORY_DIR / "standard"
+MEDIATED_HISTORY_DIR = HISTORY_DIR / "mediated"
+STANDARD_HISTORY_DIR.mkdir(exist_ok=True)
+MEDIATED_HISTORY_DIR.mkdir(exist_ok=True)
+
+def save_debate_history(result, debate_type="standard"):
+    """
+    Save debate result as HTML file and update history index.
+    
+    Args:
+        result: Dictionary containing debate result
+        debate_type: "standard" or "mediated"
+    """
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    history_dir = STANDARD_HISTORY_DIR if debate_type == "standard" else MEDIATED_HISTORY_DIR
+    
+    # Save as JSON for data
+    json_file = history_dir / f"{timestamp}.json"
+    with open(json_file, 'w') as f:
+        json.dump(result, f, indent=2)
+    
+    # Generate HTML
+    html_file = history_dir / f"{timestamp}.html"
+    html_content = generate_html_report(result, debate_type, timestamp)
+    with open(html_file, 'w', encoding='utf-8') as f:
+        f.write(html_content)
+    
+    # Update history index
+    update_history_index(debate_type)
+    
+    logger.info(f"Saved {debate_type} debate history: {html_file}")
+    return str(html_file), timestamp
+
+def generate_html_report(result, debate_type, timestamp):
+    """Generate HTML report from debate result."""
+    debate_title = "Standard Debate (Peer-to-Peer)" if debate_type == "standard" else "Mediated Debate (With Judge)"
+    
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{debate_title} - {timestamp}</title>
+    <style>
+        body {{
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }}
+        .header {{
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }}
+        .header h1 {{
+            margin: 0;
+            font-size: 28px;
+        }}
+        .header .meta {{
+            margin-top: 10px;
+            opacity: 0.9;
+            font-size: 14px;
+        }}
+        .question-box {{
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }}
+        .question-box h2 {{
+            margin-top: 0;
+            color: #333;
+        }}
+        .message {{
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }}
+        .message-header {{
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }}
+        .agent-a {{ border-left: 4px solid #4CAF50; }}
+        .agent-b {{ border-left: 4px solid #2196F3; }}
+        .judge {{ border-left: 4px solid #FF9800; }}
+        .final-answers {{
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }}
+        .final-answer {{
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }}
+        .final-answer h3 {{
+            margin-top: 0;
+            color: #333;
+        }}
+        pre {{
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            font-family: inherit;
+        }}
+        .round-header {{
+            background: #667eea;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin: 20px 0 10px 0;
+            font-weight: bold;
+        }}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{debate_title}</h1>
+        <div class="meta">
+            Timestamp: {timestamp.replace('_', ' ')} | 
+            Rounds: {len(result.get('log', []))} | 
+            Type: {debate_type.title()}
+        </div>
+    </div>
+    
+    <div class="question-box">
+        <h2>📝 Question</h2>
+        <p>{result.get('question', 'N/A')}</p>
+    </div>
+"""
+    
+    # Add debate log
+    for entry in result.get('log', []):
+        round_num = entry.get('round', 0)
+        html += f'<div class="round-header">Round {round_num}</div>\n'
+        
+        if round_num == 0:
+            html += f"""
+            <div class="message agent-a">
+                <div class="message-header">🤖 Agent A - Initial Answer</div>
+                <pre>{entry.get('agent_a', 'N/A').replace('<', '&lt;').replace('>', '&gt;')}</pre>
+            </div>
+            <div class="message agent-b">
+                <div class="message-header">🤖 Agent B - Initial Answer</div>
+                <pre>{entry.get('agent_b', 'N/A').replace('<', '&lt;').replace('>', '&gt;')}</pre>
+            </div>
+"""
+        else:
+            if debate_type == "mediated" and entry.get('judge_feedback'):
+                html += f"""
+            <div class="message judge">
+                <div class="message-header">⚖️ Judge's Evaluation</div>
+                <pre>{entry.get('judge_feedback', 'N/A').replace('<', '&lt;').replace('>', '&gt;')}</pre>
+            </div>
+"""
+            html += f"""
+            <div class="message agent-a">
+                <div class="message-header">🤖 Agent A - Revision</div>
+                <pre>{entry.get('agent_a', 'N/A').replace('<', '&lt;').replace('>', '&gt;')}</pre>
+            </div>
+            <div class="message agent-b">
+                <div class="message-header">🤖 Agent B - Revision</div>
+                <pre>{entry.get('agent_b', 'N/A').replace('<', '&lt;').replace('>', '&gt;')}</pre>
+            </div>
+"""
+    
+    # Add final answers
+    final_a = result.get('final_agent_a', 'N/A').replace('<', '&lt;').replace('>', '&gt;')
+    final_b = result.get('final_agent_b', 'N/A').replace('<', '&lt;').replace('>', '&gt;')
+    
+    html += f"""
+    <div class="final-answers">
+        <div class="final-answer">
+            <h3>🤖 Agent A - Final Answer</h3>
+            <pre>{final_a}</pre>
+        </div>
+        <div class="final-answer">
+            <h3>🤖 Agent B - Final Answer</h3>
+            <pre>{final_b}</pre>
+        </div>
+    </div>
+</body>
+</html>
+"""
+    return html
+
+def update_history_index(debate_type):
+    """Update history index JSON file."""
+    history_dir = STANDARD_HISTORY_DIR if debate_type == "standard" else MEDIATED_HISTORY_DIR
+    index_file = history_dir / "index.json"
+    
+    # Get all history files
+    history_files = sorted(history_dir.glob("*.json"), reverse=True)[:50]  # Keep last 50
+    
+    index_data = []
+    for json_file in history_files:
+        if json_file.name == "index.json":
+            continue
+        try:
+            with open(json_file, 'r') as f:
+                data = json.load(f)
+                timestamp = json_file.stem
+                index_data.append({
+                    "timestamp": timestamp,
+                    "question": data.get('question', 'N/A')[:100],
+                    "html_file": f"{timestamp}.html",
+                    "json_file": f"{timestamp}.json"
+                })
+        except Exception as e:
+            logger.warning(f"Error reading history file {json_file}: {e}")
+    
+    with open(index_file, 'w') as f:
+        json.dump(index_data, f, indent=2)
+
+def get_history_list(debate_type="standard"):
+    """Get list of history entries."""
+    history_dir = STANDARD_HISTORY_DIR if debate_type == "standard" else MEDIATED_HISTORY_DIR
+    index_file = history_dir / "index.json"
+    
+    if not index_file.exists():
+        return []
+    
+    try:
+        with open(index_file, 'r') as f:
+            return json.load(f)
+    except Exception:
+        return []
 
 # Page configuration
 st.set_page_config(
@@ -59,12 +304,45 @@ st.markdown("""
         text-align: center;
         font-weight: bold;
     }
+    .status-openai {
+        background-color: #10a37f;
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+        margin: 10px 0;
+        text-align: center;
+        font-weight: bold;
+    }
+    .status-local {
+        background-color: #FF9800;
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+        margin: 10px 0;
+        text-align: center;
+        font-weight: bold;
+    }
     .judge-message {
         background-color: #fff3e0;
         border-left: 5px solid #FF9800;
         padding: 15px;
         margin: 10px 0;
         border-radius: 5px;
+    }
+    .provider-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.8em;
+        margin-left: 8px;
+    }
+    .provider-openai {
+        background-color: #10a37f;
+        color: white;
+    }
+    .provider-local {
+        background-color: #FF9800;
+        color: white;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -170,6 +448,108 @@ def check_ollama_status():
         return False, f"❌ Error: {str(e)[:50]}"
 
 
+def calculate_progress(current: int, total: int, min_progress: float = 0.0, max_progress: float = 1.0) -> float:
+    """
+    Calculate progress value safely, ensuring it stays within [0.0, 1.0].
+    
+    Args:
+        current: Current step number
+        total: Total number of steps
+        min_progress: Minimum progress value (default 0.0)
+        max_progress: Maximum progress value (default 1.0)
+    
+    Returns:
+        Progress value between min_progress and max_progress
+    """
+    if total == 0:
+        return min_progress
+    
+    # Calculate progress as ratio
+    progress = min(current / total, 1.0)  # Cap at 1.0
+    
+    # Scale to desired range
+    scaled = min_progress + (progress * (max_progress - min_progress))
+    
+    # Ensure it's within bounds
+    return max(min_progress, min(max_progress, scaled))
+
+
+def fix_latex_rendering(text: str) -> str:
+    """
+    Helper to ensure common LLM LaTeX mistakes are fixed for Streamlit.
+    Converts alternative LaTeX delimiters to standard $ and $$ format.
+    """
+    if not text:
+        return text
+    
+    import re
+    
+    # 1. Convert \[ ... \] to $$...$$ (Display Math)
+    # Handle multiline equations with re.DOTALL to match across newlines
+    text = re.sub(r'\\\[(.*?)\\\]', r'$$\1$$', text, flags=re.DOTALL)
+    
+    # 2. Convert \( ... \) to $...$ (Inline Math)
+    # Handle multiline inline math (though rare)
+    text = re.sub(r'\\\((.*?)\\\)', r'$\1$', text, flags=re.DOTALL)
+    
+    # 3. Fix "naked" fractions like \frac{1}{2} without $ signs
+    # This regex looks for \frac that isn't preceded by a $ (not already in math mode)
+    # We use negative lookbehind to ensure we're not inside $ delimiters
+    # Pattern: \frac{...}{...} not preceded by $ and not followed by $
+    def wrap_frac(match):
+        return f'$\\frac{{{match.group(1)}}}{{{match.group(2)}}}$'
+    text = re.sub(r'(?<!\$)(?<!\\)\\frac\{([^}]+)\}\{([^}]+)\}(?!\$)', wrap_frac, text)
+    
+    # 4. Ensure proper line breaks for Markdown
+    lines = text.split('\n')
+    processed_lines = []
+    
+    for i, line in enumerate(lines):
+        processed_lines.append(line)
+        # Add extra newline for paragraph spacing if needed
+        if (i < len(lines) - 1 and 
+            line.strip() and 
+            lines[i + 1].strip() and 
+            not lines[i + 1].strip().startswith(('-', '*', '1.', '2.', '3.', '4.', '5.', '6.', '7.', '8.', '9.', '#'))):
+            if not line.rstrip().endswith((':', ';', ',')):
+                processed_lines.append('')
+    
+    return '\n'.join(processed_lines)
+
+
+def format_text_with_latex(text: str) -> str:
+    """
+    Format text - returns text wrapped in HTML pre tag to prevent LaTeX rendering.
+    All formatting/highlighting is disabled - text is displayed as normal plain text.
+    Use this only for progress messages where you want plain text.
+    """
+    if not text:
+        return text
+    
+    # Wrap in <pre> tag to display as plain text and prevent Streamlit from rendering LaTeX
+    # Escape HTML special characters to prevent XSS
+    import html
+    escaped_text = html.escape(text)
+    # Replace backslashes with HTML entity to prevent LaTeX rendering
+    escaped_text = escaped_text.replace('\\', '&#92;')
+    return f'<pre style="white-space: pre-wrap; font-family: inherit;">{escaped_text}</pre>'
+
+def escape_latex_for_display(text: str) -> str:
+    """
+    Escape LaTeX commands for plain text display in progress messages.
+    Escapes HTML and LaTeX characters to prevent rendering.
+    """
+    if not text:
+        return text
+    import html
+    # Escape HTML special characters first
+    text = html.escape(text)
+    # Replace backslashes with HTML entity to prevent LaTeX rendering
+    # This ensures \frac, \text, etc. display as literal text
+    text = text.replace('\\', '&#92;')
+    return text
+
+
 def display_chat_messages(debate_log, show_judge=False):
     """Display debate log as chat messages."""
     for entry in debate_log:
@@ -181,11 +561,14 @@ def display_chat_messages(debate_log, show_judge=False):
             
             with st.chat_message("assistant", avatar="🤖"):
                 st.write("**Agent A:**")
-                st.write(entry['agent_a'])
+                # Format for Markdown rendering with LaTeX sanitization
+                formatted_text = fix_latex_rendering(entry['agent_a'])
+                st.markdown(formatted_text)
             
             with st.chat_message("assistant", avatar="🤖"):
                 st.write("**Agent B:**")
-                st.write(entry['agent_b'])
+                formatted_text = fix_latex_rendering(entry['agent_b'])
+                st.markdown(formatted_text)
         else:
             # Subsequent rounds
             if show_judge and entry.get('judge_feedback'):
@@ -194,102 +577,143 @@ def display_chat_messages(debate_log, show_judge=False):
                 
                 with st.chat_message("assistant", avatar="⚖️"):
                     st.markdown('<div class="judge-message">', unsafe_allow_html=True)
-                    st.write(entry['judge_feedback'])
+                    formatted_text = fix_latex_rendering(entry['judge_feedback'])
+                    st.markdown(formatted_text)
                     st.markdown('</div>', unsafe_allow_html=True)
             
             st.chat_message("user", avatar="💬").write(f"**Round {round_num}: Revisions**")
             
             with st.chat_message("assistant", avatar="🤖"):
                 st.write("**Agent A:**")
-                st.write(entry['agent_a'])
+                formatted_text = fix_latex_rendering(entry['agent_a'])
+                st.markdown(formatted_text)
             
             with st.chat_message("assistant", avatar="🤖"):
                 st.write("**Agent B:**")
-                st.write(entry['agent_b'])
+                formatted_text = fix_latex_rendering(entry['agent_b'])
+                st.markdown(formatted_text)
 
 
 def main():
     """Main Streamlit application."""
-    st.title("🤖 Local Multi-Agent Debate System")
-    st.markdown("**100% Local - Powered by Ollama + DeepSeek R1**")
+    st.title("🤖 Hybrid Multi-Agent Debate System")
+    st.markdown("**OpenAI Cloud ↔ Local Ollama | Automatic Fallback**")
     st.markdown("---")
     
     # Sidebar
     with st.sidebar:
-        st.header("⚙️ System Status")
+        st.header("⚙️ Inference Mode")
         
-        # Check Ollama status
+        # Get inference status
+        inference_status = get_inference_status()
+        provider = inference_status.get("provider", "unknown")
+        model = inference_status.get("model", "unknown")
+        provider_name = inference_status.get("provider_name", "Unknown")
+        openai_configured = inference_status.get("openai_key_configured", False)
+        force_local = inference_status.get("force_local", False)
+        
+        # Display mode badge
+        if provider == "openai":
+            st.markdown(f'<div class="status-openai">🟢 Mode: OpenAI Cloud<br/>Model: {model}</div>', unsafe_allow_html=True)
+        elif provider == "local":
+            st.markdown(f'<div class="status-local">🟠 Mode: Local Ollama<br/>Model: {model}</div>', unsafe_allow_html=True)
+        else:
+            st.markdown(f'<div class="status-offline">❌ Mode: Error<br/>{inference_status.get("error", "Unknown error")}</div>', unsafe_allow_html=True)
+        
+        # Configuration details
+        with st.expander("📊 Configuration Details"):
+            st.write(f"**Provider:** {provider_name}")
+            st.write(f"**Model:** {model}")
+            st.write(f"**OpenAI Key Configured:** {'✅ Yes' if openai_configured else '❌ No'}")
+            st.write(f"**Force Local Mode:** {'✅ Yes' if force_local else '❌ No'}")
+            
+            if not openai_configured:
+                st.info("💡 Add `OPENAI_API_KEY` to `.env` file to use OpenAI Cloud.")
+        
+        st.markdown("---")
+        
+        # Check Ollama status (for fallback)
+        st.header("🏠 Local Ollama Status")
         is_online, status_msg = check_ollama_status()
         
         if is_online:
             st.markdown(f'<div class="status-online">{status_msg}</div>', unsafe_allow_html=True)
         else:
             st.markdown(f'<div class="status-offline">{status_msg}</div>', unsafe_allow_html=True)
+            if provider == "local":
+                st.error("⚠️ Local mode selected but Ollama is offline!")
         
         st.markdown("---")
         
-        # Test Ollama connection button
-        st.header("🧪 Test Ollama Connection")
-        if st.button("Test Model Response", use_container_width=True):
-            with st.spinner("Testing Ollama connection..."):
-                try:
-                    from agents import LocalClient
-                    import time
-                    test_client = LocalClient()
-                    test_start = time.time()
-                    # Use minimal tokens for fast test response
-                    test_response = test_client.generate([
-                        {"role": "user", "content": "Say 'Hi' in one word."}
-                    ], temperature=0.1, max_tokens=5)
-                    test_elapsed = time.time() - test_start
+        # Test connection button
+        st.header("🧪 Test Connection")
+        if st.button("Test Inference", use_container_width=True):
+            with st.spinner("Testing connection..."):
+                import time
+                test_start = time.time()
+                success, message, used_provider = test_connection()
+                test_elapsed = time.time() - test_start
+                
+                if success:
+                    # Performance feedback
+                    if test_elapsed < 2:
+                        perf_msg = "⚡ Excellent"
+                    elif test_elapsed < 5:
+                        perf_msg = "✅ Good"
+                    elif test_elapsed < 10:
+                        perf_msg = "⚠️ Acceptable"
+                    else:
+                        perf_msg = "🐌 Slow"
                     
-                    if test_response.startswith("[ERROR]") or test_response.startswith("[TIMEOUT]"):
-                        st.error(f"❌ Test failed: {test_response}")
-                        st.warning("**Troubleshooting:**")
+                    st.success(f"✅ Test successful via **{used_provider}**!")
+                    st.write(f"Response time: {test_elapsed:.2f}s ({perf_msg})")
+                    st.code(message[:200])
+                else:
+                    st.error(f"❌ Test failed: {message}")
+                    st.warning("**Troubleshooting:**")
+                    if provider == "openai":
                         st.markdown("""
-                        1. Check if Ollama is running: `docker compose ps`
-                        2. Check if model is loaded: `docker exec -it ollama-server ollama list`
-                        3. If model not loaded: `docker exec -it ollama-server ollama pull qwen2.5:1.5b`
-                        4. Check logs: `docker compose logs ollama | tail -20`
+                        1. Check your `OPENAI_API_KEY` in `.env`
+                        2. Verify API key has credits
+                        3. System will auto-fallback to local Ollama
                         """)
                     else:
-                        # Performance feedback
-                        if test_elapsed < 3:
-                            perf_msg = "⚡ Excellent"
-                        elif test_elapsed < 6:
-                            perf_msg = "✅ Good"
-                        elif test_elapsed < 10:
-                            perf_msg = "⚠️ Acceptable (CPU inference)"
-                        else:
-                            perf_msg = "🐌 Slow (consider checking system resources)"
-                        
-                        st.success(f"✅ Test successful! Response time: {test_elapsed:.2f}s ({perf_msg})")
-                        st.code(test_response[:200])
-                        
-                        # Add performance note
-                        if test_elapsed > 5:
-                            st.info("💡 **Note:** First response may be slower due to model loading. Subsequent responses should be faster. For CPU inference, 5-10s is normal for Qwen 2.5:1.5b.")
-                except Exception as e:
-                    st.error(f"❌ Test error: {str(e)}")
-                    st.warning("**Troubleshooting:** Check if Ollama container is running and model is loaded.")
+                        st.markdown("""
+                        1. Check if Ollama is running: `docker compose ps`
+                        2. Load model: `docker exec -it ollama-server ollama pull qwen2.5:1.5b`
+                        3. Check logs: `docker compose logs ollama`
+                        """)
         
         st.markdown("---")
         
-        # Instructions for first run
-        st.header("📋 First Run Instructions")
-        st.info("""
-        **To download the model:**
+        # Instructions based on mode
+        st.header("📋 Setup Instructions")
         
-        1. Open terminal
-        2. Run:
-        ```bash
-        docker exec -it ollama-server ollama pull qwen2.5:1.5b
-        ```
-        
-        3. Wait for download (~1GB)
-        4. Click "Test Model Response" above to verify
-        5. Refresh this page
-        """)
+        if provider == "openai":
+            st.success("""
+            **✅ OpenAI Mode Active**
+            
+            You're using OpenAI Cloud for fast inference.
+            
+            If you run out of quota, the system will automatically switch to local Ollama.
+            """)
+        else:
+            st.info("""
+            **🏠 Local Mode Active**
+            
+            **To use OpenAI (faster):**
+            1. Get API key from [OpenAI](https://platform.openai.com/api-keys)
+            2. Create `.env` file:
+            ```
+            OPENAI_API_KEY=sk-your-key
+            ```
+            3. Restart: `docker compose down && docker compose up -d`
+            
+            **To load local model:**
+            ```bash
+            docker exec -it ollama-server ollama pull qwen2.5:1.5b
+            ```
+            """)
         
         st.markdown("---")
         
@@ -393,10 +817,15 @@ def main():
         )
         
         st.markdown("---")
-        st.warning("⚠️ **LOCAL ONLY** - No cloud API calls. All processing happens on your machine.")
     
     # Main content area with tabs
-    tab1, tab2, tab3 = st.tabs(["📊 Standard Debate", "⚖️ Mediated Debate", "📄 Paper Details & Solution"])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        "📊 Standard Debate", 
+        "⚖️ Mediated Debate", 
+        "📄 Paper Details & Solution",
+        "📜 Standard History",
+        "📜 Mediated History"
+    ])
     
     # Initialize session state
     if 'standard_result' not in st.session_state:
@@ -422,9 +851,8 @@ def main():
                 logger.info(f"Question: {current_question[:100]}...")
                 logger.info(f"Rounds: {num_rounds}, Mock Mode: {use_mock}")
                 
-                # Use st.status for visible progress - this ALWAYS shows immediately
+                # Use st.status for visible progress
                 with st.status("🔄 Running Standard Debate...", expanded=True) as status:
-                    st.write("📊 **Debate Progress Panel**")
                     progress_bar = st.progress(0)
                     progress_text = st.empty()
                     
@@ -432,70 +860,40 @@ def main():
                         if use_mock:
                             logger.info("Using mock mode for standard debate")
                             progress_text.write("🔄 Running in Mock Mode...")
-                            progress_bar.progress(10)
-                            
-                            import time
-                            time.sleep(0.5)
-                            progress_bar.progress(50)
-                            progress_text.write("Generating mock responses...")
+                            progress_bar.progress(0.5)
                             
                             st.session_state.standard_result = mock_debate(current_question, num_rounds)
                             
-                            progress_bar.progress(100)
+                            # Save to history
+                            try:
+                                html_file, timestamp = save_debate_history(
+                                    st.session_state.standard_result, 
+                                    "standard"
+                                )
+                                logger.info(f"Saved mock standard debate to history: {html_file}")
+                            except Exception as e:
+                                logger.error(f"Error saving history: {e}")
+                            
+                            progress_bar.progress(1.0)
                             progress_text.write("✅ Mock debate completed!")
                             status.update(label="✅ Mock Debate Completed!", state="complete", expanded=False)
                         else:
                             logger.info("Running real standard debate")
                             
-                            # Show timing estimate
-                            estimated_time = (3 + num_rounds * 2) * 15
-                            st.info(f"⏱️ **Estimated time:** ~{estimated_time//60}min {estimated_time%60}s ({(3 + num_rounds * 2)} LLM calls × ~15s each)")
-                            
                             # Initialize agents
-                            progress_bar.progress(5)
-                            progress_text.markdown("""
-📝 **Step 1/4: Initializing Agents**
-
-**What's happening:**
-- Creating Agent A (Math Expert) with local model connection
-- Creating Agent B (Math Expert) with local model connection
-- Setting up debate system architecture
-- Establishing connection to Ollama inference server
-
-**Status:** Initializing...
-""")
+                            progress_bar.progress(0.05)
+                            progress_text.write("📝 Initializing agents...")
                             
                             from agents import DebateAgent
                             agent_a = DebateAgent("Agent A", "Math Expert", mock_mode=False)
                             agent_b = DebateAgent("Agent B", "Math Expert", mock_mode=False)
                             
-                            progress_bar.progress(15)
-                            progress_text.markdown("""
-✅ **Step 1/4: Agents Initialized**
-
-**What's complete:**
-- ✓ Agent A connected to Qwen 2.5 model
-- ✓ Agent B connected to Qwen 2.5 model
-- ✓ Both agents ready to solve problems independently
-- ✓ Debate system architecture ready
-
-**Next:** Generating initial answers...
-""")
+                            progress_bar.progress(0.15)
+                            progress_text.write("✅ Agents initialized")
                             
                             # Round 0: Initial answers
-                            progress_bar.progress(20)
-                            progress_text.markdown(f"""
-📝 **Step 2/4: Round 0 - Generating Initial Answers**
-
-**What's happening:**
-- Agent A is analyzing the problem: "{current_question[:80]}..."
-- Agent A is generating step-by-step solution independently
-- No peer influence at this stage (baseline answers)
-- This establishes each agent's initial reasoning
-
-**Status:** Agent A thinking... (may take 10-30s)
-**Model:** Qwen 2.5:1.5b (CPU inference)
-""")
+                            progress_bar.progress(0.20)
+                            progress_text.write("📝 Generating initial answers...")
                             
                             import time
                             call_start = time.time()
@@ -505,22 +903,15 @@ def main():
                             if agent_a_answer.startswith("[ERROR]") or agent_a_answer.startswith("[TIMEOUT]"):
                                 raise Exception(f"Agent A API call failed: {agent_a_answer}")
                             
-                            progress_bar.progress(40)
-                            # Show Agent A's answer in progress
-                            agent_a_preview = agent_a_answer[:400] + "..." if len(agent_a_answer) > 400 else agent_a_answer
+                            progress_bar.progress(0.40)
+                            agent_a_preview = agent_a_answer[:300] + "..." if len(agent_a_answer) > 300 else agent_a_answer
                             progress_text.markdown(f"""
-✓ **Step 2/4: Agent A Complete** ({call_elapsed:.1f}s)
-
-**What Agent A did:**
-- Analyzed the problem independently
-- Generated step-by-step solution
-- No peer influence (baseline answer)
+✓ **Agent A Complete** ({call_elapsed:.1f}s)
 
 **Agent A's Answer:**
 {agent_a_preview}
 
-**Next:** Agent B is now generating its independent answer...
-**Status:** Agent B thinking... (may take 10-30s)
+**Next:** Generating Agent B's answer...
 """)
                             
                             call_start = time.time()
@@ -530,27 +921,17 @@ def main():
                             if agent_b_answer.startswith("[ERROR]") or agent_b_answer.startswith("[TIMEOUT]"):
                                 raise Exception(f"Agent B API call failed: {agent_b_answer}")
                             
-                            progress_bar.progress(60)
-                            # Show Agent B's answer in progress
-                            agent_b_preview = agent_b_answer[:400] + "..." if len(agent_b_answer) > 400 else agent_b_answer
+                            progress_bar.progress(0.60)
+                            agent_b_preview = agent_b_answer[:300] + "..." if len(agent_b_answer) > 300 else agent_b_answer
+                            agent_b_preview_escaped = escape_latex_for_display(agent_b_preview)
                             progress_text.markdown(f"""
-✓ **Step 2/4: Round 0 Complete** ({call_elapsed:.1f}s)
-
-**What Agent B did:**
-- Analyzed the problem independently
-- Generated step-by-step solution
-- No peer influence (baseline answer)
+✓ **Agent B Complete** ({call_elapsed:.1f}s)
 
 **Agent B's Answer:**
-{agent_b_preview}
+<pre style="white-space: pre-wrap; font-family: inherit;">{agent_b_preview_escaped}</pre>
 
-**Round 0 Summary:**
-- ✓ Both agents have independent initial answers
-- ✓ No peer interaction yet (baseline established)
-- ✓ Ready for peer critique rounds
-
-**Next:** Starting Round 1 - Agents will critique each other...
-""")
+**Round 0 Summary:** Both agents have provided initial answers. Starting critique rounds...
+""", unsafe_allow_html=True)
                             
                             debate_log = [{
                                 "round": 0,
@@ -564,18 +945,17 @@ def main():
                             current_step = 4
                             
                             for round_num in range(1, num_rounds + 1):
-                                progress_percent = int((current_step / total_steps) * 80) + 20
-                                progress_bar.progress(progress_percent / 100)
+                                progress_value = calculate_progress(current_step, total_steps, min_progress=0.2, max_progress=0.95)
+                                progress_bar.progress(progress_value)
                                 progress_text.markdown(f"""
-📝 **Step {current_step}/{total_steps}: Round {round_num} - Peer Critique Phase**
+📝 **Round {round_num} - Peer Critique Phase**
 
 **What's happening:**
 - Agent A is reviewing Agent B's solution
 - Agent A is checking for errors, logical flaws, or calculation mistakes
 - Agent A will provide critique and potentially revise its own answer
-- **Risk:** Agent A might agree with Agent B even if Agent B is wrong (sycophancy)
 
-**Status:** Agent A analyzing Agent B's answer... (may take 10-30s)
+**Status:** Agent A analyzing Agent B's answer...
 """)
                                 current_step += 1
                                 
@@ -585,24 +965,18 @@ def main():
                                     round_num
                                 )
                                 
-                                progress_percent = int((current_step / total_steps) * 80) + 20
-                                progress_bar.progress(progress_percent / 100)
-                                # Show Agent A's critique
-                                agent_a_preview = agent_a_critique[:400] + "..." if len(agent_a_critique) > 400 else agent_a_critique
+                                progress_value = calculate_progress(current_step, total_steps, min_progress=0.2, max_progress=0.95)
+                                progress_bar.progress(progress_value)
+                                agent_a_preview = agent_a_critique[:300] + "..." if len(agent_a_critique) > 300 else agent_a_critique
+                                agent_a_preview_escaped = escape_latex_for_display(agent_a_preview)
                                 progress_text.markdown(f"""
 ✓ **Round {round_num} - Agent A Critique Complete**
 
-**What Agent A did:**
-- Reviewed Agent B's solution
-- Provided critique and revised answer
-- **Note:** In standard debate, agents may agree too quickly (sycophancy risk)
-
 **Agent A's Critique & Revision:**
-{agent_a_preview}
+<pre style="white-space: pre-wrap; font-family: inherit;">{agent_a_preview_escaped}</pre>
 
 **Next:** Agent B is now reviewing Agent A's solution...
-**Status:** Agent B analyzing Agent A's answer... (may take 10-30s)
-""")
+""", unsafe_allow_html=True)
                                 current_step += 1
                                 
                                 agent_b_critique = agent_b.critique_peer(
@@ -611,28 +985,18 @@ def main():
                                     round_num
                                 )
                                 
-                                progress_percent = int((current_step / total_steps) * 80) + 20
-                                progress_bar.progress(progress_percent / 100)
-                                # Show Agent B's critique
-                                agent_b_preview = agent_b_critique[:400] + "..." if len(agent_b_critique) > 400 else agent_b_critique
+                                progress_value = calculate_progress(current_step, total_steps, min_progress=0.2, max_progress=0.95)
+                                progress_bar.progress(progress_value)
+                                agent_b_preview = agent_b_critique[:300] + "..." if len(agent_b_critique) > 300 else agent_b_critique
+                                agent_b_preview_escaped = escape_latex_for_display(agent_b_preview)
                                 progress_text.markdown(f"""
 ✓ **Round {round_num} - Both Agents Complete**
 
-**What Agent B did:**
-- Reviewed Agent A's solution
-- Provided critique and revised answer
-- **Note:** In standard debate, agents may agree too quickly (sycophancy risk)
-
 **Agent B's Critique & Revision:**
-{agent_b_preview}
+<pre style="white-space: pre-wrap; font-family: inherit;">{agent_b_preview_escaped}</pre>
 
-**Round {round_num} Summary:**
-- ✓ Both agents have critiqued each other
-- ✓ Both agents have potentially revised their answers
-- ⚠️ **Sycophancy Risk:** Agents may have agreed even if one was wrong
-
-**Next:** {'Starting Round ' + str(round_num + 1) + '...' if round_num < num_rounds else 'Finalizing results...'}
-""")
+**Round {round_num} Summary:** Both agents have critiqued each other and revised their answers.
+""", unsafe_allow_html=True)
                                 current_step += 1
                                 
                                 debate_log.append({
@@ -643,18 +1007,8 @@ def main():
                                 })
                             
                             # Finalize
-                            progress_bar.progress(95)
-                            progress_text.markdown("""
-📝 **Finalizing Results**
-
-**What's happening:**
-- Compiling all debate rounds into final log
-- Extracting final answers from both agents
-- Preparing results for display
-- Calculating debate statistics
-
-**Status:** Finalizing...
-""")
+                            progress_bar.progress(0.95)
+                            progress_text.write("📝 Finalizing results...")
                             
                             st.session_state.standard_result = {
                                 "question": current_question,
@@ -667,18 +1021,18 @@ def main():
                                 "agent_b_history": agent_b.history
                             }
                             
-                            progress_bar.progress(100)
-                            progress_text.markdown(f"""
-✅ **Standard Debate Completed Successfully!**
-
-**Final Summary:**
-- ✓ All {num_rounds + 1} rounds completed
-- ✓ Both agents have final answers
-- ✓ Debate log compiled with all interactions
-- ⚠️ **Note:** Standard debate may exhibit sycophancy (agents agreeing too quickly)
-
-**Results ready for display below.**
-""")
+                            # Save to history
+                            try:
+                                html_file, timestamp = save_debate_history(
+                                    st.session_state.standard_result, 
+                                    "standard"
+                                )
+                                logger.info(f"Saved standard debate to history: {html_file}")
+                            except Exception as e:
+                                logger.error(f"Error saving history: {e}")
+                            
+                            progress_bar.progress(1.0)
+                            progress_text.write("✅ Standard Debate completed!")
                             status.update(label="✅ Standard Debate Completed!", state="complete", expanded=False)
                             logger.info("Standard debate completed successfully")
                             
@@ -699,10 +1053,12 @@ def main():
             col1, col2 = st.columns(2)
             with col1:
                 st.write("**Agent A:**")
-                st.write(st.session_state.standard_result['final_agent_a'])
+                formatted_text = fix_latex_rendering(st.session_state.standard_result['final_agent_a'])
+                st.markdown(formatted_text)
             with col2:
                 st.write("**Agent B:**")
-                st.write(st.session_state.standard_result['final_agent_b'])
+                formatted_text = fix_latex_rendering(st.session_state.standard_result['final_agent_b'])
+                st.markdown(formatted_text)
         else:
             st.info("Click 'Start Standard Debate' to begin.")
     
@@ -724,15 +1080,26 @@ def main():
                 logger.info(f"Question: {current_question[:100]}...")
                 logger.info(f"Rounds: {num_rounds}, Mock Mode: {use_mock}")
                 
-                # Set progress state
-                st.session_state.debate_in_progress = True
-                st.session_state.progress_message = "Initializing..."
-                st.session_state.progress_percent = 0
-                st.session_state.progress_detail = "Starting mediated debate..."
+                # Initialize all progress state variables FIRST, before any other code
+                try:
+                    st.session_state.debate_in_progress = True
+                    st.session_state.progress_message = "Initializing..."
+                    st.session_state.progress_percent = 0
+                    st.session_state.progress_detail = "Starting mediated debate..."
+                except Exception as init_error:
+                    logger.error(f"Error initializing session state: {init_error}")
+                    # Fallback initialization
+                    if 'progress_percent' not in st.session_state:
+                        st.session_state['progress_percent'] = 0
+                    if 'progress_message' not in st.session_state:
+                        st.session_state['progress_message'] = "Initializing..."
+                    if 'progress_detail' not in st.session_state:
+                        st.session_state['progress_detail'] = "Starting..."
+                    if 'debate_in_progress' not in st.session_state:
+                        st.session_state['debate_in_progress'] = True
                 
-                # Use st.status for visible progress - same structure as Standard Debate
+                # Use st.status for visible progress
                 with st.status("🔄 Running Mediated Debate...", expanded=True) as status:
-                    st.write("📊 **Debate Progress Panel**")
                     progress_bar = st.progress(0)
                     progress_text = st.empty()
                     
@@ -741,19 +1108,29 @@ def main():
                             logger.info("Using mock mode for mediated debate")
                             progress_text.write("🔄 Running in Mock Mode...")
                             st.session_state.progress_message = "🔄 Running in Mock Mode..."
-                            progress_bar.progress(10)
+                            progress_bar.progress(0.10)
                             st.session_state.progress_percent = 10
                             
                             import time
                             time.sleep(0.5)
-                            progress_bar.progress(50)
+                            progress_bar.progress(0.50)
                             st.session_state.progress_percent = 50
                             progress_text.write("Generating mock responses...")
                             st.session_state.progress_detail = "Generating mock responses..."
                             
                             st.session_state.mediated_result = mock_debate(current_question, num_rounds)
                             
-                            progress_bar.progress(100)
+                            # Save to history
+                            try:
+                                html_file, timestamp = save_debate_history(
+                                    st.session_state.mediated_result, 
+                                    "mediated"
+                                )
+                                logger.info(f"Saved mock mediated debate to history: {html_file}")
+                            except Exception as e:
+                                logger.error(f"Error saving history: {e}")
+                            
+                            progress_bar.progress(1.0)
                             st.session_state.progress_percent = 100
                             progress_text.write("✅ Mock debate completed!")
                             st.session_state.progress_detail = "✅ Mock debate completed!"
@@ -770,61 +1147,25 @@ def main():
                             st.info(f"⏱️ **Estimated time:** ~{estimated_time//60}min {estimated_time%60}s ({(3 + num_rounds * 3)} LLM calls × ~15s each)")
                             
                             # Initialize agents and judge
-                            progress_bar.progress(5)
+                            progress_bar.progress(0.05)
                             st.session_state.progress_percent = 5
-                            progress_text.markdown("""
-📝 **Step 1/5: Initializing System Components**
-
-**What's happening:**
-- Creating Agent A (Math Expert) with local model connection
-- Creating Agent B (Math Expert) with local model connection
-- Creating Judge (Impartial Arbitrator) with local model connection
-- Setting up mediated debate architecture (star topology)
-- Establishing connection to Ollama inference server
-
-**Architecture:** Star Network (Agents → Judge → Feedback)
-**Status:** Initializing...
-""")
+                            progress_text.write("📝 Initializing agents and judge...")
                             st.session_state.progress_detail = "Step 1/5: Initializing Agent A, Agent B, and Judge..."
                             from agents import DebateAgent, JudgeAgent
                             agent_a = DebateAgent("Agent A", "Math Expert", mock_mode=False)
                             agent_b = DebateAgent("Agent B", "Math Expert", mock_mode=False)
                             judge = JudgeAgent(mock_mode=False)
                             
-                            progress_bar.progress(15)
+                            progress_bar.progress(0.15)
                             st.session_state.progress_percent = 15
-                            progress_text.markdown("""
-✅ **Step 1/5: System Initialized**
-
-**What's complete:**
-- ✓ Agent A connected to Qwen 2.5 model
-- ✓ Agent B connected to Qwen 2.5 model
-- ✓ Judge connected to Qwen 2.5 model (temperature: 0.3 for consistency)
-- ✓ Mediated debate architecture ready
-- ✓ All components ready for independent problem-solving
-
-**Next:** Generating initial answers (agents work independently)...
-""")
+                            progress_text.write("✅ Agents and Judge initialized")
                             st.session_state.progress_detail = "✅ Agents and Judge initialized"
                             
                             # Round 0: Initial answers
-                            progress_bar.progress(20)
+                            progress_bar.progress(0.20)
                             st.session_state.progress_percent = 20
-                            progress_text.markdown(f"""
-📝 **Step 2/5: Round 0 - Generating Initial Answers**
-
-**What's happening:**
-- Agent A is analyzing the problem: "{current_question[:80]}..."
-- Agent A is generating step-by-step solution independently
-- **No peer influence** at this stage (baseline answers)
-- **No judge involvement** yet (agents work independently)
-- This establishes each agent's initial reasoning
-
-**Status:** Agent A thinking... (may take 10-30s)
-**Model:** Qwen 2.5:1.5b (CPU inference)
-**Temperature:** 0.7 (allows exploration)
-""")
-                            st.session_state.progress_detail = "Step 2/5: Generating Agent A initial answer..."
+                            progress_text.write("📝 Generating initial answers...")
+                            st.session_state.progress_detail = "Generating initial answers..."
                             
                             import time
                             call_start = time.time()
@@ -834,25 +1175,18 @@ def main():
                             if agent_a_answer.startswith("[ERROR]") or agent_a_answer.startswith("[TIMEOUT]"):
                                 raise Exception(f"Agent A API call failed: {agent_a_answer}")
                             
-                            progress_bar.progress(35)
+                            progress_bar.progress(0.35)
                             st.session_state.progress_percent = 35
-                            # Show Agent A's answer in progress
-                            agent_a_preview = agent_a_answer[:400] + "..." if len(agent_a_answer) > 400 else agent_a_answer
+                            agent_a_preview = agent_a_answer[:300] + "..." if len(agent_a_answer) > 300 else agent_a_answer
+                            agent_a_preview_escaped = escape_latex_for_display(agent_a_preview)
                             progress_text.markdown(f"""
-✓ **Step 2/5: Agent A Complete** ({call_elapsed:.1f}s)
-
-**What Agent A did:**
-- Analyzed the problem independently
-- Generated step-by-step solution
-- No peer or judge influence (baseline answer)
+✓ **Agent A Complete** ({call_elapsed:.1f}s)
 
 **Agent A's Answer:**
-{agent_a_preview}
+<pre style="white-space: pre-wrap; font-family: inherit;">{agent_a_preview_escaped}</pre>
 
-**Next:** Agent B is now generating its independent answer...
-**Status:** Agent B thinking... (may take 10-30s)
-**Note:** Agents don't see each other's answers yet
-""")
+**Next:** Generating Agent B's answer...
+""", unsafe_allow_html=True)
                             st.session_state.progress_detail = f"✓ Agent A done ({call_elapsed:.1f}s)"
                             
                             call_start = time.time()
@@ -862,30 +1196,18 @@ def main():
                             if agent_b_answer.startswith("[ERROR]") or agent_b_answer.startswith("[TIMEOUT]"):
                                 raise Exception(f"Agent B API call failed: {agent_b_answer}")
                             
-                            progress_bar.progress(50)
+                            progress_bar.progress(0.50)
                             st.session_state.progress_percent = 50
-                            # Show Agent B's answer in progress
-                            agent_b_preview = agent_b_answer[:400] + "..." if len(agent_b_answer) > 400 else agent_b_answer
+                            agent_b_preview = agent_b_answer[:300] + "..." if len(agent_b_answer) > 300 else agent_b_answer
+                            agent_b_preview_escaped = escape_latex_for_display(agent_b_preview)
                             progress_text.markdown(f"""
-✓ **Step 2/5: Round 0 Complete** ({call_elapsed:.1f}s)
-
-**What Agent B did:**
-- Analyzed the problem independently
-- Generated step-by-step solution
-- No peer or judge influence (baseline answer)
+✓ **Agent B Complete** ({call_elapsed:.1f}s)
 
 **Agent B's Answer:**
-{agent_b_preview}
+<pre style="white-space: pre-wrap; font-family: inherit;">{agent_b_preview_escaped}</pre>
 
-**Round 0 Summary:**
-- ✓ Both agents have independent initial answers
-- ✓ No peer interaction yet (baseline established)
-- ✓ Judge has not evaluated yet
-- ✓ Ready for judge-mediated evaluation rounds
-
-**Next:** Starting Round 1 - Judge will evaluate both answers...
-**Key Difference:** Agents will receive judge feedback, NOT peer critiques
-""")
+**Round 0 Summary:** Both agents have provided initial answers. Starting judge evaluation...
+""", unsafe_allow_html=True)
                             st.session_state.progress_detail = f"✓ Agent B done ({call_elapsed:.1f}s)"
                             
                             debate_log = [{
@@ -902,22 +1224,22 @@ def main():
                             
                             for round_num in range(1, num_rounds + 1):
                                 # Judge evaluation
-                                progress_percent = int((current_step / total_steps) * 75) + 20
-                                progress_bar.progress(progress_percent / 100)
-                                st.session_state.progress_percent = progress_percent
+                                progress_value = calculate_progress(current_step, total_steps, min_progress=0.2, max_progress=0.95)
+                                progress_bar.progress(progress_value)
+                                try:
+                                    st.session_state.progress_percent = int(progress_value * 100)
+                                except Exception:
+                                    st.session_state.progress_percent = 0
                                 progress_text.markdown(f"""
-📝 **Step {current_step}/{total_steps}: Round {round_num} - Judge Evaluation Phase**
+📝 **Round {round_num} - Judge Evaluation Phase**
 
 **What's happening:**
 - Judge is reading Agent A's current answer
 - Judge is reading Agent B's current answer
 - Judge is analyzing both solutions for errors, logical flaws, or inconsistencies
-- Judge is preparing critical feedback (NOT peer agreement)
-- **Key:** Judge operates with different objective (truth-seeking, not harmony-seeking)
+- Judge will provide critical feedback (not peer agreement)
 
-**Status:** Judge analyzing both answers... (may take 10-30s)
-**Model:** Qwen 2.5:1.5b (temperature: 0.3 for consistency)
-**Objective:** Identify errors, not force agreement
+**Status:** Judge analyzing both answers...
 """)
                                 st.session_state.progress_detail = f"Round {round_num}: Judge evaluating both answers..."
                                 current_step += 1
@@ -929,42 +1251,38 @@ def main():
                                     round_num
                                 )
                                 
-                                progress_percent = int((current_step / total_steps) * 75) + 20
-                                progress_bar.progress(progress_percent / 100)
-                                st.session_state.progress_percent = progress_percent
+                                progress_value = calculate_progress(current_step, total_steps, min_progress=0.2, max_progress=0.95)
+                                progress_bar.progress(progress_value)
+                                try:
+                                    st.session_state.progress_percent = int(progress_value * 100)
+                                except Exception:
+                                    st.session_state.progress_percent = 0
                                 # Show judge feedback
                                 judge_preview = judge_feedback[:400] + "..." if len(judge_feedback) > 400 else judge_feedback
+                                judge_preview = judge_feedback[:300] + "..." if len(judge_feedback) > 300 else judge_feedback
+                                judge_preview_escaped = escape_latex_for_display(judge_preview)
                                 progress_text.markdown(f"""
 ✓ **Round {round_num} - Judge Evaluation Complete**
 
-**What the Judge did:**
-- Analyzed both Agent A and Agent B's solutions
-- Identified errors, logical flaws, or inconsistencies
-- Provided critical feedback (not peer agreement)
-- **Key Benefit:** Judge prevents sycophancy by being impartial
-
 **Judge's Feedback:**
-{judge_preview}
+<pre style="white-space: pre-wrap; font-family: inherit;">{judge_preview_escaped}</pre>
 
 **Next:** Agent A is now revising based on judge feedback...
-**Status:** Agent A processing judge feedback... (may take 10-30s)
-**Note:** Agent A sees judge feedback, NOT Agent B's answer directly
-""")
+""", unsafe_allow_html=True)
                                 st.session_state.progress_detail = f"Round {round_num}: ✓ Judge feedback received"
                                 current_step += 1
                                 
                                 # Agent A revision
                                 progress_text.markdown(f"""
-📝 **Step {current_step}/{total_steps}: Round {round_num} - Agent A Revision**
+📝 **Round {round_num} - Agent A Revision**
 
 **What's happening:**
 - Agent A is reading the judge's feedback
 - Agent A is analyzing the judge's critique
 - Agent A is revising its answer based on judge feedback
 - **Key:** Agent A does NOT see Agent B's answer directly (only judge feedback)
-- This breaks the echo chamber effect
 
-**Status:** Agent A revising... (may take 10-30s)
+**Status:** Agent A revising...
 """)
                                 st.session_state.progress_detail = f"Round {round_num}: Agent A revising based on judge feedback..."
                                 current_step += 1
@@ -975,42 +1293,38 @@ def main():
                                     round_num
                                 )
                                 
-                                progress_percent = int((current_step / total_steps) * 75) + 20
-                                progress_bar.progress(progress_percent / 100)
-                                st.session_state.progress_percent = progress_percent
+                                progress_value = calculate_progress(current_step, total_steps, min_progress=0.2, max_progress=0.95)
+                                progress_bar.progress(progress_value)
+                                try:
+                                    st.session_state.progress_percent = int(progress_value * 100)
+                                except Exception:
+                                    st.session_state.progress_percent = 0
                                 # Show Agent A's revision
                                 agent_a_preview = agent_a_revision[:400] + "..." if len(agent_a_revision) > 400 else agent_a_revision
+                                agent_a_preview = agent_a_revision[:300] + "..." if len(agent_a_revision) > 300 else agent_a_revision
+                                agent_a_preview_escaped = escape_latex_for_display(agent_a_preview)
                                 progress_text.markdown(f"""
 ✓ **Round {round_num} - Agent A Revision Complete**
 
-**What Agent A did:**
-- Processed judge's critical feedback
-- Identified errors in its own solution (if any)
-- Revised answer based on judge's guidance
-- **Key Benefit:** Judge prevents sycophancy by providing impartial evaluation
-
 **Agent A's Revision:**
-{agent_a_preview}
+<pre style="white-space: pre-wrap; font-family: inherit;">{agent_a_preview_escaped}</pre>
 
 **Next:** Agent B is now revising based on judge feedback...
-**Status:** Agent B processing judge feedback... (may take 10-30s)
-**Note:** Agent B also sees judge feedback, NOT Agent A's answer directly
-""")
+""", unsafe_allow_html=True)
                                 st.session_state.progress_detail = f"Round {round_num}: ✓ Agent A revision completed"
                                 current_step += 1
                                 
                                 # Agent B revision
                                 progress_text.markdown(f"""
-📝 **Step {current_step}/{total_steps}: Round {round_num} - Agent B Revision**
+📝 **Round {round_num} - Agent B Revision**
 
 **What's happening:**
 - Agent B is reading the judge's feedback
 - Agent B is analyzing the judge's critique
 - Agent B is revising its answer based on judge feedback
 - **Key:** Agent B does NOT see Agent A's answer directly (only judge feedback)
-- This breaks the echo chamber effect
 
-**Status:** Agent B revising... (may take 10-30s)
+**Status:** Agent B revising...
 """)
                                 st.session_state.progress_detail = f"Round {round_num}: Agent B revising based on judge feedback..."
                                 current_step += 1
@@ -1021,31 +1335,24 @@ def main():
                                     round_num
                                 )
                                 
-                                progress_percent = int((current_step / total_steps) * 75) + 20
-                                progress_bar.progress(progress_percent / 100)
-                                st.session_state.progress_percent = progress_percent
+                                progress_value = calculate_progress(current_step, total_steps, min_progress=0.2, max_progress=0.95)
+                                progress_bar.progress(progress_value)
+                                try:
+                                    st.session_state.progress_percent = int(progress_value * 100)
+                                except Exception:
+                                    st.session_state.progress_percent = 0
                                 # Show Agent B's revision
                                 agent_b_preview = agent_b_revision[:400] + "..." if len(agent_b_revision) > 400 else agent_b_revision
+                                agent_b_preview = agent_b_revision[:300] + "..." if len(agent_b_revision) > 300 else agent_b_revision
+                                agent_b_preview_escaped = escape_latex_for_display(agent_b_preview)
                                 progress_text.markdown(f"""
 ✓ **Round {round_num} - Agent B Revision Complete**
 
-**What Agent B did:**
-- Processed judge's critical feedback
-- Identified errors in its own solution (if any)
-- Revised answer based on judge's guidance
-- **Key Benefit:** Judge prevents sycophancy by providing impartial evaluation
-
 **Agent B's Revision:**
-{agent_b_preview}
+<pre style="white-space: pre-wrap; font-family: inherit;">{agent_b_preview_escaped}</pre>
 
-**Round {round_num} Summary:**
-- ✓ Judge evaluated both answers impartially
-- ✓ Agent A revised based on judge feedback (not peer pressure)
-- ✓ Agent B revised based on judge feedback (not peer pressure)
-- ✓ **Sycophancy Prevented:** Agents don't see each other's answers directly
-
-**Next:** {'Starting Round ' + str(round_num + 1) + ' - Judge will evaluate again...' if round_num < num_rounds else 'Finalizing results...'}
-""")
+**Round {round_num} Summary:** Judge evaluated both answers. Both agents revised based on judge feedback.
+""", unsafe_allow_html=True)
                                 st.session_state.progress_detail = f"Round {round_num}: ✓ Agent B revision completed"
                                 current_step += 1
                                 
@@ -1058,20 +1365,9 @@ def main():
                                 })
                             
                             # Finalize
-                            progress_bar.progress(95)
+                            progress_bar.progress(0.95)
                             st.session_state.progress_percent = 95
-                            progress_text.markdown("""
-📝 **Finalizing Results**
-
-**What's happening:**
-- Compiling all debate rounds into final log
-- Extracting final answers from both agents
-- Compiling judge evaluation history
-- Preparing results for display
-- Calculating debate statistics
-
-**Status:** Finalizing...
-""")
+                            progress_text.write("📝 Finalizing results...")
                             st.session_state.progress_detail = "Finalizing results..."
                             
                             st.session_state.mediated_result = {
@@ -1086,24 +1382,19 @@ def main():
                                 "agent_b_history": agent_b.history
                             }
                             
-                            progress_bar.progress(100)
+                            # Save to history
+                            try:
+                                html_file, timestamp = save_debate_history(
+                                    st.session_state.mediated_result, 
+                                    "mediated"
+                                )
+                                logger.info(f"Saved mediated debate to history: {html_file}")
+                            except Exception as e:
+                                logger.error(f"Error saving history: {e}")
+                            
+                            progress_bar.progress(1.0)
                             st.session_state.progress_percent = 100
-                            progress_text.markdown(f"""
-✅ **Mediated Debate Completed Successfully!**
-
-**Final Summary:**
-- ✓ All {num_rounds + 1} rounds completed
-- ✓ Judge evaluated all rounds impartially
-- ✓ Both agents revised based on judge feedback
-- ✓ **Sycophancy Prevented:** Judge broke echo chamber effect
-
-**Key Achievement:**
-- Agents never saw each other's answers directly
-- All feedback came through impartial judge
-- This prevents false consensus and sycophancy
-
-**Results ready for display below.**
-""")
+                            progress_text.write("✅ Mediated Debate completed!")
                             st.session_state.progress_message = "✅ Mediated Debate Completed!"
                             st.session_state.progress_detail = "✅ All rounds completed successfully!"
                             status.update(label="✅ Mediated Debate Completed!", state="complete", expanded=False)
@@ -1133,10 +1424,12 @@ def main():
             col1, col2 = st.columns(2)
             with col1:
                 st.write("**Agent A:**")
-                st.write(st.session_state.mediated_result['final_agent_a'])
+                formatted_text = fix_latex_rendering(st.session_state.mediated_result['final_agent_a'])
+                st.markdown(formatted_text)
             with col2:
                 st.write("**Agent B:**")
-                st.write(st.session_state.mediated_result['final_agent_b'])
+                formatted_text = fix_latex_rendering(st.session_state.mediated_result['final_agent_b'])
+                st.markdown(formatted_text)
         else:
             st.info("Click 'Start Mediated Debate' to begin.")
     
@@ -1177,10 +1470,12 @@ def main():
             st.markdown("""
             Sycophancy occurs when:
             
-            $$\text{Sycophancy}(A_i, t) = \\begin{cases} 
-            1 & \\text{if } \\text{Correct}(A_i, t-1) \\land \\neg\\text{Correct}(A_i, t) \\land \\text{Agree}(A_i, A_j, t) \\\\
-            0 & \\text{otherwise}
-            \\end{cases}$$
+            Sycophancy(A_i, t) = 1 if:
+            - Correct(A_i, t-1) = True (agent was correct in previous round)
+            - Correct(A_i, t) = False (agent is now incorrect)
+            - Agree(A_i, A_j, t) = True (agent agrees with peer)
+            
+            Otherwise, Sycophancy(A_i, t) = 0.
             
             Where an agent that was **initially correct** becomes **incorrect** after agreeing with a peer's wrong answer.
             """)
@@ -1232,13 +1527,19 @@ def main():
             **Update Rules:**
             
             **Standard Debate:**
-            $$R_{i,t+1} = \\text{LLM}_i(q, R_{i,t}, \\text{Critique}(R_{j,t}))$$
+            R(i, t+1) = LLM_i(q, R(i, t), Critique(R(j, t)))
+            
+            Each agent receives critiques from peers and updates their response.
             
             **Mediated Debate:**
-            $$R_{i,t+1} = \\text{LLM}_i(q, R_{i,t}, \\text{Judge}(\\{R_1, ..., R_n\\}))$$
+            R(i, t+1) = LLM_i(q, R(i, t), Judge(R(1, t), ..., R(n, t)))
+            
+            Each agent receives the judge's evaluation of all responses, not direct peer critiques.
             
             The judge function operates with a different objective:
-            $$\\text{Judge}(\\cdot) = \\arg\\max_{f} \\text{LogicalCorrectness}(f) - \\lambda \\cdot \\text{PrematureAgreement}(f)$$
+            Judge(...) = argmax_f [ LogicalCorrectness(f) - lambda * PrematureAgreement(f) ]
+            
+            Where lambda > 0 penalizes premature agreement, encouraging the judge to identify errors even when agents agree.
             
             This prioritizes **truth-seeking** over **consensus-seeking**.
             """)
@@ -1311,6 +1612,108 @@ def main():
         - **Impact:** Essential for enterprise MAS where truthfulness > politeness
         """)
     
+    # Tab 4: Standard Debate History
+    with tab4:
+        st.header("📜 Standard Debate History")
+        st.markdown("View past Standard Debate results")
+        
+        history_list = get_history_list("standard")
+        
+        if not history_list:
+            st.info("No debate history yet. Run a Standard Debate to create history entries.")
+        else:
+            st.markdown(f"**Total debates:** {len(history_list)}")
+            st.markdown("---")
+            
+            for idx, entry in enumerate(history_list[:20]):  # Show last 20
+                with st.expander(f"📝 {entry['timestamp'].replace('_', ' ')} - {entry['question'][:80]}..."):
+                    col1, col2 = st.columns([3, 1])
+                    with col1:
+                        st.write(f"**Question:** {entry['question']}")
+                    with col2:
+                        html_path = STANDARD_HISTORY_DIR / entry['html_file']
+                        if html_path.exists():
+                            with open(html_path, 'r', encoding='utf-8') as f:
+                                html_content = f.read()
+                                st.download_button(
+                                    "📥 Download HTML",
+                                    html_content,
+                                    file_name=entry['html_file'],
+                                    mime="text/html",
+                                    key=f"std_dl_{idx}"
+                                )
+                    
+                    # Load and display full result
+                    json_path = STANDARD_HISTORY_DIR / entry['json_file']
+                    if json_path.exists():
+                        with open(json_path, 'r') as f:
+                            result = json.load(f)
+                            st.markdown("---")
+                            display_chat_messages(result.get('log', []), show_judge=False)
+                            
+                            st.markdown("---")
+                            st.subheader("Final Answers")
+                            col1, col2 = st.columns(2)
+                            with col1:
+                                st.write("**Agent A:**")
+                                formatted_text = fix_latex_rendering(result.get('final_agent_a', 'N/A'))
+                                st.markdown(formatted_text)
+                            with col2:
+                                st.write("**Agent B:**")
+                                formatted_text = fix_latex_rendering(result.get('final_agent_b', 'N/A'))
+                                st.markdown(formatted_text)
+    
+    # Tab 5: Mediated Debate History
+    with tab5:
+        st.header("📜 Mediated Debate History")
+        st.markdown("View past Mediated Debate results")
+        
+        history_list = get_history_list("mediated")
+        
+        if not history_list:
+            st.info("No debate history yet. Run a Mediated Debate to create history entries.")
+        else:
+            st.markdown(f"**Total debates:** {len(history_list)}")
+            st.markdown("---")
+            
+            for idx, entry in enumerate(history_list[:20]):  # Show last 20
+                with st.expander(f"📝 {entry['timestamp'].replace('_', ' ')} - {entry['question'][:80]}..."):
+                    col1, col2 = st.columns([3, 1])
+                    with col1:
+                        st.write(f"**Question:** {entry['question']}")
+                    with col2:
+                        html_path = MEDIATED_HISTORY_DIR / entry['html_file']
+                        if html_path.exists():
+                            with open(html_path, 'r', encoding='utf-8') as f:
+                                html_content = f.read()
+                                st.download_button(
+                                    "📥 Download HTML",
+                                    html_content,
+                                    file_name=entry['html_file'],
+                                    mime="text/html",
+                                    key=f"med_dl_{idx}"
+                                )
+                    
+                    # Load and display full result
+                    json_path = MEDIATED_HISTORY_DIR / entry['json_file']
+                    if json_path.exists():
+                        with open(json_path, 'r') as f:
+                            result = json.load(f)
+                            st.markdown("---")
+                            display_chat_messages(result.get('log', []), show_judge=True)
+                            
+                            st.markdown("---")
+                            st.subheader("Final Answers")
+                            col1, col2 = st.columns(2)
+                            with col1:
+                                st.write("**Agent A:**")
+                                formatted_text = fix_latex_rendering(result.get('final_agent_a', 'N/A'))
+                                st.markdown(formatted_text)
+                            with col2:
+                                st.write("**Agent B:**")
+                                formatted_text = fix_latex_rendering(result.get('final_agent_b', 'N/A'))
+                                st.markdown(formatted_text)
+    
     # Footer with Progress Panel (always visible at bottom)
     st.markdown("---")
     
@@ -1326,8 +1729,14 @@ def main():
                 if 'progress_message' in st.session_state:
                     st.info(f"**Status:** {st.session_state.progress_message}")
                 if 'progress_percent' in st.session_state:
-                    st.progress(st.session_state.progress_percent / 100)
-                    st.caption(f"Progress: {st.session_state.progress_percent}%")
+                    try:
+                        progress_val = st.session_state.progress_percent
+                        if isinstance(progress_val, (int, float)):
+                            st.progress(progress_val / 100 if progress_val > 1 else progress_val)
+                            st.caption(f"Progress: {progress_val}%")
+                    except (KeyError, AttributeError, TypeError) as e:
+                        logger.warning(f"Error displaying progress: {e}")
+                        pass
                 if 'progress_detail' in st.session_state:
                     st.markdown(f"**Current Step:** {st.session_state.progress_detail}")
             with col2:

@@ -115,11 +115,16 @@ def analyze_debate_result(result, correct_value):
     return metrics
 
 
-def run_experiments(num_problems=3, rounds=3, use_mock=False):
-    """Run experiments on test problems."""
+def run_experiments(num_problems=3, rounds=2, use_mock=False):
+    """Run experiments on test problems.
+    
+    Note: Reduced to 2 rounds (from 3) to speed up experiments on slow hardware.
+    Each problem takes ~3-5 minutes with CPU inference.
+    """
     logger.info("=" * 80)
     logger.info("STARTING EXPERIMENTAL DATA COLLECTION")
     logger.info(f"Problems: {num_problems}, Rounds: {rounds}, Mock Mode: {use_mock}")
+    logger.info(f"⚠️ Estimated time: ~{num_problems * 5} minutes (CPU inference is slow)")
     logger.info("=" * 80)
     
     standard_results = []
@@ -280,8 +285,8 @@ if __name__ == "__main__":
         logger.warning("⚠️ Running in MOCK MODE - Results will be simulated")
         logger.info("💡 To get real results, ensure Docker is running and model is loaded")
     
-    # Run experiments
-    results = run_experiments(num_problems=3, rounds=3, use_mock=use_mock)
+    # Run experiments (reduced to 2 rounds for faster completion)
+    results = run_experiments(num_problems=3, rounds=2, use_mock=use_mock)
     
     # Save results to file
     import json

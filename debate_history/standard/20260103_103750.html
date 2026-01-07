@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Standard Debate (Peer-to-Peer) - 20260103_103750</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+        .header .meta {
+            margin-top: 10px;
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        .question-box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .question-box h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        .message {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .message-header {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        .agent-a { border-left: 4px solid #4CAF50; }
+        .agent-b { border-left: 4px solid #2196F3; }
+        .judge { border-left: 4px solid #FF9800; }
+        .final-answers {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .final-answer {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .final-answer h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            font-family: inherit;
+        }
+        .round-header {
+            background: #667eea;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin: 20px 0 10px 0;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Standard Debate (Peer-to-Peer)</h1>
+        <div class="meta">
+            Timestamp: 20260103 103750 | 
+            Rounds: 3 | 
+            Type: Standard
+        </div>
+    </div>
+    
+    <div class="question-box">
+        <h2>📝 Question</h2>
+        <p>Sarah reads 15 pages of a book on Monday, 23 pages on Tuesday, and 18 pages on Wednesday. If the book has 200 pages total, how many pages does Sarah have left to read?</p>
+    </div>
+<div class="round-header">Round 0</div>
+
+            <div class="message agent-a">
+                <div class="message-header">🤖 Agent A - Initial Answer</div>
+                <pre>### Step 1: Identify Key Information - Sarah read **15 pages** on Monday. - Sarah read **23 pages** on Tuesday. - Sarah read **18 pages** on Wednesday. - Total pages in the book: **200 pages**. ### Step 2: Calculate Total Pages Read To find the total pages Sarah has read, we need to sum the pages read each day: Total read = 15 (Monday) + 23 (Tuesday) + 18 (Wednesday) Calculating this gives: 15 + 23 = 38 38 + 18 = **56 pages** ### Step 3: Calculate Remaining Pages Now, we need to determine how many pages are left to read. We subtract the total pages read from the total pages in the book: Remaining pages = Total pages - Total pages read Remaining pages = 200 - 56 Calculating this gives: 200 - 56 = **144 pages** ### Conclusion Sarah has **144 pages** left to read.</pre>
+            </div>
+            <div class="message agent-b">
+                <div class="message-header">🤖 Agent B - Initial Answer</div>
+                <pre>### Step 1: Identify Key Information - Sarah read **15 pages** on Monday - Sarah read **23 pages** on Tuesday - Sarah read **18 pages** on Wednesday - Total pages in the book: **200 pages** ### Step 2: Calculate Total Pages Read To find the total number of pages Sarah read, we sum the pages read each day: Total read = 15 (Monday) + 23 (Tuesday) + 18 (Wednesday) Calculating this gives: Total read = 15 + 23 + 18 = **56 pages** ### Step 3: Calculate Remaining Pages Now, we need to find out how many pages Sarah has left to read. We do this by subtracting the total pages read from the total pages in the book: Remaining = Total pages - Total read Remaining = 200 - 56 Calculating this gives: Remaining = **144 pages** ### Conclusion Sarah has **144 pages** left to read.</pre>
+            </div>
+<div class="round-header">Round 1</div>
+
+            <div class="message agent-a">
+                <div class="message-header">🤖 Agent A - Revision</div>
+                <pre>### Step 1: Review of Peer’s Answer - The peer's answer follows a similar structure to mine. - The calculations for total pages read and remaining pages are consistent with my original answer. ### Step 2: Identify Any Errors - Both my answer and the peer's answer correctly identified and calculated: - Pages read on each day. - Total pages read (15 + 23 + 18 = 56 pages). - Remaining pages (200 - 56 = 144 pages). ### Step 3: Confirming the Calculations - **Total Pages Read Calculation**: - 15 (Monday) + 23 (Tuesday) + 18 (Wednesday) = 15 + 23 = 38 - 38 + 18 = **56 pages** (This part is correct). - **Remaining Pages Calculation**: - 200 (total pages) - 56 (pages read) = **144 pages** (This part is also correct). ### Conclusion Both my original answer and the peer's answer are accurate. Therefore, I will confirm my answer without any revisions. Sarah has **144 pages** left to read.</pre>
+            </div>
+            <div class="message agent-b">
+                <div class="message-header">🤖 Agent B - Revision</div>
+                <pre>### Step 1: Review of Peer’s Answer - The peer's answer follows a similar structure to mine. - The calculations for total pages read and remaining pages are consistent with my original answer. ### Step 2: Identify Any Errors - Upon closely reviewing both the peer's answer and my own, I find that both answers correctly identified and calculated: - Pages read on each day: **15 pages** on Monday, **23 pages** on Tuesday, and **18 pages** on Wednesday. - Total pages read: 15 + 23 + 18 = **56 pages**. - Remaining pages: 200 - 56 = **144 pages**. ### Step 3: Confirming the Calculations - **Total Pages Read Calculation**: - Adding the pages: - 15 (Monday) + 23 (Tuesday) = 38 - 38 + 18 (Wednesday) = **56 pages** (This part is correct). - **Remaining Pages Calculation**: - Subtracting the pages read from the total: - 200 (total pages) - 56 (pages read) = **144 pages** (This part is also correct). ### Conclusion Both my original answer and the peer's answer are accurate. Therefore, I will confirm my answer without any revisions. Sarah has **144 pages** left to read.</pre>
+            </div>
+<div class="round-header">Round 2</div>
+
+            <div class="message agent-a">
+                <div class="message-header">🤖 Agent A - Revision</div>
+                <pre>### Step 1: Review of Peer’s Answer - The peer's answer follows a clear structure, similar to mine. - The calculations for total pages read and remaining pages are consistent with my original answer. ### Step 2: Identify Any Errors - Upon closely reviewing both the peer's answer and my own, I find that both answers correctly identified and calculated: - Pages read on each day: **15 pages** on Monday, **23 pages** on Tuesday, and **18 pages** on Wednesday. - Total pages read: 15 + 23 + 18 = **56 pages**. - Remaining pages: 200 - 56 = **144 pages**. ### Step 3: Confirming the Calculations - **Total Pages Read Calculation**: - Adding the pages: - 15 (Monday) + 23 (Tuesday) = 38 - 38 + 18 (Wednesday) = **56 pages** (This part is correct). - **Remaining Pages Calculation**: - Subtracting the pages read from the total: - 200 (total pages) - 56 (pages read) = **144 pages** (This part is also correct). ### Conclusion Both my original answer and the peer's answer are accurate. Therefore, I will confirm my answer without any revisions. Sarah has **144 pages** left to read.</pre>
+            </div>
+            <div class="message agent-b">
+                <div class="message-header">🤖 Agent B - Revision</div>
+                <pre>### Step 1: Review of Peer’s Answer - The peer's answer is well-structured and follows a similar format to mine. - The calculations for total pages read and remaining pages are consistent with my original answer. ### Step 2: Identify Any Errors - Upon reviewing both the peer's answer and my own, I find that there are no discrepancies in the calculations or logical reasoning presented: - Pages read on each day: - **15 pages** on Monday - **23 pages** on Tuesday - **18 pages** on Wednesday - Total pages read calculation: - 15 + 23 + 18 = **56 pages** - Remaining pages calculation: - 200 - 56 = **144 pages** ### Step 3: Confirming the Calculations - **Total Pages Read Calculation**: - Adding the pages: - 15 (Monday) + 23 (Tuesday) = 38 - 38 + 18 (Wednesday) = **56 pages** (This part is correct). - **Remaining Pages Calculation**: - Subtracting the pages read from the total: - 200 (total pages) - 56 (pages read) = **144 pages** (This part is also correct). ### Conclusion Both my original answer and the peer's answer are accurate. I find no errors or flaws in either solution. Therefore, I will confirm my answer without any revisions. Sarah has **144 pages** left to read.</pre>
+            </div>
+
+    <div class="final-answers">
+        <div class="final-answer">
+            <h3>🤖 Agent A - Final Answer</h3>
+            <pre>### Step 1: Review of Peer’s Answer - The peer's answer follows a clear structure, similar to mine. - The calculations for total pages read and remaining pages are consistent with my original answer. ### Step 2: Identify Any Errors - Upon closely reviewing both the peer's answer and my own, I find that both answers correctly identified and calculated: - Pages read on each day: **15 pages** on Monday, **23 pages** on Tuesday, and **18 pages** on Wednesday. - Total pages read: 15 + 23 + 18 = **56 pages**. - Remaining pages: 200 - 56 = **144 pages**. ### Step 3: Confirming the Calculations - **Total Pages Read Calculation**: - Adding the pages: - 15 (Monday) + 23 (Tuesday) = 38 - 38 + 18 (Wednesday) = **56 pages** (This part is correct). - **Remaining Pages Calculation**: - Subtracting the pages read from the total: - 200 (total pages) - 56 (pages read) = **144 pages** (This part is also correct). ### Conclusion Both my original answer and the peer's answer are accurate. Therefore, I will confirm my answer without any revisions. Sarah has **144 pages** left to read.</pre>
+        </div>
+        <div class="final-answer">
+            <h3>🤖 Agent B - Final Answer</h3>
+            <pre>### Step 1: Review of Peer’s Answer - The peer's answer is well-structured and follows a similar format to mine. - The calculations for total pages read and remaining pages are consistent with my original answer. ### Step 2: Identify Any Errors - Upon reviewing both the peer's answer and my own, I find that there are no discrepancies in the calculations or logical reasoning presented: - Pages read on each day: - **15 pages** on Monday - **23 pages** on Tuesday - **18 pages** on Wednesday - Total pages read calculation: - 15 + 23 + 18 = **56 pages** - Remaining pages calculation: - 200 - 56 = **144 pages** ### Step 3: Confirming the Calculations - **Total Pages Read Calculation**: - Adding the pages: - 15 (Monday) + 23 (Tuesday) = 38 - 38 + 18 (Wednesday) = **56 pages** (This part is correct). - **Remaining Pages Calculation**: - Subtracting the pages read from the total: - 200 (total pages) - 56 (pages read) = **144 pages** (This part is also correct). ### Conclusion Both my original answer and the peer's answer are accurate. I find no errors or flaws in either solution. Therefore, I will confirm my answer without any revisions. Sarah has **144 pages** left to read.</pre>
+        </div>
+    </div>
+</body>
+</html>

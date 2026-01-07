@@ -46,5 +46,8 @@ logs/
 debate_system.log
 streamlit_app.log
 
+# Debate History - Allow committing to GitHub for results
+# debate_history/
+
 # Docker
 .docker/

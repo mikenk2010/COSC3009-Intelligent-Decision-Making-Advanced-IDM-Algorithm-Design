@@ -189,7 +189,7 @@ If you see timeout errors:
 
 Use the provided update script:
 ```bash
-./update_code.sh
+./scripts/update_code.sh
 ```
 
 #### Manual Update

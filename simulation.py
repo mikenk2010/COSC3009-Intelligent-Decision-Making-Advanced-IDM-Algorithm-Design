@@ -1,6 +1,7 @@
 """
 Multi-Agent Debate System - Simulation Logic
-100% LOCAL ONLY - Uses local Ollama models with robust error handling.
+Hybrid Inference: OpenAI Cloud (priority) with Local Ollama fallback.
+Robust error handling ensures the demo never crashes.
 """
 
 import logging

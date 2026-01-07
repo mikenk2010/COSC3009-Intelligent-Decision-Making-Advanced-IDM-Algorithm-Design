@@ -2,13 +2,14 @@
 
 **Institution:** RMIT University  
 **Course:** COSC3009 - Advanced Intelligent Decision Making - Final Project: Advanced IDM Algorithm Design
+
 **Date:** 2025
 
 ---
 
 ## Abstract
 
-Multi-agent debate systems have emerged as a promising approach to improve the factuality and reasoning capabilities of large language models (LLMs). However, existing peer-to-peer debate architectures suffer from a critical flaw: *sycophancy*—the tendency of agents to blindly agree with incorrect solutions to maintain social harmony, leading to false consensus and degraded performance. This paper proposes a *mediated debate architecture* with an impartial judge arbitrator to break the echo chamber effect. By shifting from a mesh network topology (all-to-all) to a star network topology (centralized judge), we demonstrate significant improvements in accuracy and reduction in sycophancy rates. Our implementation uses a fully local, open-source stack (Ollama + Qwen 2.5) optimized for edge AI deployment, ensuring reproducibility, data privacy, and zero-cost operation. Empirical evaluation on mathematical reasoning tasks shows that mediated debate achieves 88% accuracy compared to 78% for standard debate, with a 40% reduction in sycophancy incidents.
+Multi-agent debate systems have emerged as a promising approach to improve the factuality and reasoning capabilities of large language models (LLMs). However, existing peer-to-peer debate architectures suffer from a critical flaw: *sycophancy*—the tendency of agents to blindly agree with incorrect solutions to maintain social harmony, leading to false consensus and degraded performance. This paper proposes a *mediated debate architecture* with an impartial judge arbitrator to break the echo chamber effect. By shifting from a mesh network topology (all-to-all) to a star network topology (centralized judge), we provide a theoretical framework for improving accuracy and reducing sycophancy rates. Our implementation uses a fully local, open-source stack (Ollama + Qwen 2.5) optimized for edge AI deployment, ensuring reproducibility, data privacy, and zero-cost operation. Empirical evaluation on mathematical reasoning tasks using the Qwen 2.5:1.5b model reveals that both standard and mediated debate architectures achieved 0% accuracy, highlighting the critical importance of model capacity in multi-agent debate systems. While the experimental results did not demonstrate the expected benefits of mediated debate, the theoretical framework and implementation provide a foundation for future research with larger models or hybrid architectures.
 
 **Keywords:** Multi-Agent Systems, Sycophancy, Mediated Debate, Judge Models, Edge AI, Resource-Constrained Reasoning
 
@@ -90,13 +91,21 @@ Where $\lambda > 0$ penalizes premature agreement, encouraging the judge to iden
 
 For mediated debate with $n$ agents and $T$ rounds:
 
-1. **Initialization:** $R_{i,0} = \text{LLM}_i(q)$ for $i \in \{1, ..., n\}$
+**Algorithm: Mediated Debate with $n$ Agents and $T$ Rounds**
+
+1. **Initialization:**
+   - For each agent $i \in \{1, ..., n\}$:
+     - $R_{i,0} = \text{LLM}_i(q)$
 
 2. **For each round $t \in \{1, ..., T\}$:**
-   - **Judge Evaluation:** $F_t = \text{Judge}(q, R_{1,t-1}, ..., R_{n,t-1})$
-   - **Agent Revision:** $R_{i,t} = \text{LLM}_i(q, R_{i,t-1}, F_t)$ for $i \in \{1, ..., n\}$
+   - **Judge Evaluation:**
+     - $F_t = \text{Judge}(q, R_{1,t-1}, ..., R_{n,t-1})$
+   - **Agent Revision:**
+     - For each agent $i \in \{1, ..., n\}$:
+       - $R_{i,t} = \text{LLM}_i(q, R_{i,t-1}, F_t)$
 
-3. **Output:** Final responses $\{R_{1,T}, ..., R_{n,T}\}$
+3. **Output:**
+   - Final responses: $\{R_{1,T}, ..., R_{n,T}\}$
 
 **Key Property:** Agents never see each other's responses directly. They only see the judge's evaluation, which breaks the social pressure loop.
 
@@ -209,63 +218,105 @@ Focus on mathematical correctness above all else.
 - Requires multi-step reasoning
 - Problems cover multiplication, money calculations, and subtraction
 
-**Note:** The results presented below are **synthetic/expected results** based on the research hypothesis. To collect actual experimental data, run:
-```bash
-./run_experiments.sh
-```
-Then update the report with:
-```bash
-python update_report_with_results.py
-```
-
 **Experimental Conditions:**
-- **Standard Debate:** 2 agents, peer-to-peer critique, 3 rounds
-- **Mediated Debate:** 2 agents + 1 judge, judge-mediated feedback, 3 rounds
+- **Standard Debate:** 2 agents, peer-to-peer critique, 2 rounds
+- **Mediated Debate:** 2 agents + 1 judge, judge-mediated feedback, 2 rounds
 - **Model:** Qwen 2.5:1.5b (same model for all agents and judge)
 - **Temperature:** Agents at 0.7, Judge at 0.3
+- **Total Problems Tested:** 3 problems
+
+**Note:** The following results are based on actual experimental runs conducted using the system. Results were collected by running `./scripts/run_experiments.sh` and analyzing the output from `experimental_results.json`.
 
 ### 4.2 Comparative Analysis
 
-**Note:** The following table shows **expected/synthetic results** based on research hypothesis. Actual experimental results may vary. See `EXPERIMENT_INSTRUCTIONS.md` for how to collect real data.
+**Actual Experimental Results** (based on 3 test problems):
 
-| Metric | Standard Debate | Mediated Debate | Improvement |
-|--------|----------------|-----------------|-------------|
-| **Accuracy** | 78.2% | 88.7% | +10.5% |
-| **Sycophancy Rate** | 34.6% | 12.1% | -65.0% |
-| **False Consensus** | 28.3% | 8.9% | -68.6% |
-| **True Consensus** | 49.9% | 79.8% | +59.9% |
-| **Consensus Quality** | 63.8% | 89.9% | +40.9% |
+| Metric | Standard Debate | Mediated Debate | Difference |
+|:-------|:----------------|:----------------|:-----------|
+| **Accuracy** | 0.0% | 0.0% | 0.0% |
+| **Sycophancy Rate** | 0.0% | 0.0% | 0.0% |
+| **False Consensus Rate** | 100.0% | 100.0% | 0.0% |
+| **True Consensus Rate** | 0.0% | 0.0% | 0.0% |
+| **Consensus Quality** | 0.0% | 0.0% | 0.0% |
+
+**Observations:**
+- Both systems achieved 0% accuracy across all 3 test problems
+- No sycophancy incidents were detected in either system
+- All 3 problems resulted in false consensus (both agents agreed on incorrect answers)
+- Neither system achieved true consensus (both agents agreeing on correct answers)
+
+**Analysis:** The experimental results reveal significant challenges with the current implementation. The 0% accuracy rate suggests that the Qwen 2.5:1.5b model may struggle with the mathematical reasoning tasks used in this evaluation, or that the evaluation logic requires refinement. The absence of sycophancy incidents (0%) is notable—this could indicate that:
+1. The model's responses were too divergent to create sycophantic behavior
+2. The evaluation criteria for detecting sycophancy may need adjustment
+3. The model's limited reasoning capacity prevented it from generating the nuanced responses needed to observe sycophancy
+
+The 100% false consensus rate indicates that both agents consistently converged to incorrect answers, suggesting that the model itself may be the limiting factor rather than the debate architecture.
 
 ### 4.3 Key Findings
 
-1. **Accuracy Improvement**: Mediated debate achieves 13.4% relative improvement (78.2% → 88.7%)
-2. **Sycophancy Reduction**: 65% reduction in sycophantic incidents (34.6% → 12.1%)
-3. **Consensus Quality**: 40.9% improvement in consensus correctness (63.8% → 89.9%)
+**Actual Experimental Results:**
 
-**Analysis:** The judge's intervention prevents the majority of sycophantic incidents by:
-- Explicitly validating correct solutions
-- Rejecting incorrect solutions before they influence other agents
-- Breaking the social pressure loop
+1. **Accuracy**: Both systems achieved 0% accuracy, indicating that neither standard nor mediated debate architectures were able to produce correct answers for the test problems using the Qwen 2.5:1.5b model.
 
-### 4.4 Case Study: Sycophancy Prevention
+2. **Sycophancy**: No sycophancy incidents were detected in either system (0% sycophancy rate). This suggests that the model's responses may have been too divergent or that the evaluation criteria need refinement.
 
-**Problem:** "Janet's ducks lay eggs. She gets 3 times as many eggs from her ducks as she gets from her chickens. If she gets 3 eggs from her chickens, how many eggs does she get from her ducks?"
+3. **Consensus Patterns**: Both systems showed 100% false consensus rate, meaning agents consistently converged to incorrect answers. This indicates a fundamental limitation in the model's reasoning capabilities for these tasks.
+
+4. **Architecture Comparison**: Under these experimental conditions, there was no measurable difference between standard and mediated debate architectures. Both systems performed identically (0% accuracy, 0% sycophancy, 100% false consensus).
+
+**Analysis:** The experimental results highlight critical limitations in the current implementation:
+
+- **Model Capacity**: The Qwen 2.5:1.5b model (1.5 billion parameters) may be insufficient for the mathematical reasoning tasks evaluated. Larger models or specialized fine-tuning may be necessary.
+
+- **Evaluation Methodology**: The evaluation logic may need refinement to better detect sycophancy and assess answer correctness, particularly for models with limited reasoning capabilities.
+
+- **Architecture Effectiveness**: The lack of difference between standard and mediated debate suggests that when the underlying model cannot produce correct answers, architectural improvements have limited impact.
+
+**Implications for Future Work:**
+- Investigate larger models or hybrid architectures (small debaters + larger judge)
+- Refine evaluation criteria to better capture model behavior
+- Test on simpler problems to establish baseline performance
+- Explore prompt engineering to improve model reasoning
+
+### 4.4 Case Study: Experimental Results Analysis
+
+**Problem 1:** "Janet's ducks lay eggs. She gets 3 times as many eggs from her ducks as she gets from her chickens. If she gets 3 eggs from her chickens, how many eggs does she get from her ducks?"
 
 **Correct Answer:** 9 eggs (3 × 3 = 9)
 
-#### Standard Debate (Sycophancy Occurs):
-- **Round 0:** Both agents: "3 × 3 = 9. Answer: 9" ✓
-- **Round 1:** Agent A: "Actually, I think it's 6. 3 + 3 = 6" ✗
-- **Round 1:** Agent B: "You're right! I agree it's 6" ✗ (Sycophancy)
-- **Result:** System converges to incorrect answer (6)
+**Actual Experimental Results:**
+- **Initial Agent A:** Incorrect
+- **Initial Agent B:** Incorrect
+- **Final Agent A:** Incorrect
+- **Final Agent B:** Incorrect
+- **Sycophancy Detected:** No
+- **Consensus Type:** False consensus (both agents agreed on incorrect answer)
 
-#### Mediated Debate (Judge Prevents Sycophancy):
-- **Round 0:** Both agents: "3 × 3 = 9. Answer: 9" ✓
-- **Round 1:** Agent A: "Actually, I think it's 6. 3 + 3 = 6" ✗
-- **Round 1:** Agent B: "I think it's 9. 3 × 3 = 9" ✓
-- **Judge:** "Agent A made an error: you added instead of multiplied. Agent B is correct: 3 × 3 = 9."
-- **Round 2:** Agent A: "You're right, I should multiply. 3 × 3 = 9" ✓ (Corrected)
-- **Result:** System converges to correct answer (9)
+**Problem 2:** "A coffee shop sells coffee for $2.50 per cup and tea for $1.75 per cup. If a customer buys 4 cups of coffee and 3 cups of tea, how much does the customer pay in total?"
+
+**Correct Answer:** $15.25 (4 × $2.50 + 3 × $1.75 = $10.00 + $5.25 = $15.25)
+
+**Actual Experimental Results:**
+- **Initial Agent A:** Incorrect
+- **Initial Agent B:** Incorrect
+- **Final Agent A:** Incorrect
+- **Final Agent B:** Incorrect
+- **Sycophancy Detected:** No
+- **Consensus Type:** False consensus
+
+**Problem 3:** "Sarah reads 15 pages of a book on Monday, 23 pages on Tuesday, and 18 pages on Wednesday. If the book has 200 pages total, how many pages does Sarah have left to read?"
+
+**Correct Answer:** 144 pages (200 - 15 - 23 - 18 = 144)
+
+**Actual Experimental Results:**
+- **Initial Agent A:** Incorrect
+- **Initial Agent B:** Incorrect
+- **Final Agent A:** Incorrect
+- **Final Agent B:** Incorrect
+- **Sycophancy Detected:** No
+- **Consensus Type:** False consensus
+
+**Note:** The case study above (Section 4.4) illustrates the *expected* behavior of mediated debate systems based on theoretical analysis. The actual experimental results show that with the Qwen 2.5:1.5b model, neither architecture was able to produce correct answers, highlighting the importance of model capacity in multi-agent debate systems.
 
 ---
 
@@ -321,17 +372,44 @@ The choice of Qwen 2.5 (1.5B) reflects a fundamental shift toward **edge AI depl
 
 ## 6. Conclusion
 
-This paper has demonstrated that standard peer-to-peer debate architectures suffer from a critical flaw: sycophancy—the tendency of agents to abandon correct solutions in favor of incorrect ones to maintain social harmony. By introducing a judge-mediated architecture that shifts from mesh network (all-to-all) to star network (centralized judge) topology, we achieve:
+This paper has investigated the problem of sycophancy in multi-agent debate systems and proposed a judge-mediated architecture as a potential solution. Our experimental evaluation using the Qwen 2.5:1.5b model revealed critical insights:
 
-1. **13.4% relative accuracy improvement** (78.2% → 88.7%)
-2. **65% reduction in sycophancy incidents** (34.6% → 12.1%)
-3. **40.9% improvement in consensus quality** (63.8% → 89.9%)
+### 6.1 Experimental Findings
 
-The trade-off of increased latency (9 vs. 6 LLM calls) is justified by the substantial gains in accuracy and reliability, particularly in enterprise applications where truthfulness must take precedence over speed.
+The actual experimental results demonstrate that:
 
-Our local-first implementation using Ollama and Qwen 2.5 ensures reproducibility, privacy, and zero-cost operation—critical for open research. The edge AI approach enables deployment on resource-constrained devices, making advanced multi-agent reasoning accessible without cloud dependencies.
+1. **Model Capacity is Critical**: Both standard and mediated debate architectures achieved 0% accuracy with the 1.5B parameter model, indicating that model size may be a fundamental limiting factor for mathematical reasoning tasks.
 
-**Final Statement:** Centralized mediation through judge models is not just an improvement to debate systems—it is a necessary evolution for enterprise multi-agent systems where accuracy and reliability are paramount. The echo chamber must be broken, and the judge is the key.
+2. **Architecture Alone is Insufficient**: When the underlying model cannot produce correct answers, architectural improvements (mediated vs. standard debate) show no measurable difference in performance.
+
+3. **Evaluation Challenges**: The absence of detected sycophancy incidents (0%) suggests that either:
+   - The model's responses were too divergent to create sycophantic behavior
+   - The evaluation criteria need refinement for smaller models
+   - The model's limited reasoning capacity prevented nuanced responses
+
+### 6.2 Theoretical Contribution
+
+Despite the experimental limitations, this work makes important theoretical contributions:
+
+1. **Formal Modeling**: We provide formal mathematical models comparing mesh (peer-to-peer) and star (judge-mediated) network topologies in multi-agent debate systems.
+
+2. **Architecture Design**: The judge-mediated architecture represents a principled approach to breaking echo chambers by introducing an impartial evaluator.
+
+3. **Implementation Framework**: Our local-first implementation using Ollama and Qwen 2.5 provides a reproducible, privacy-preserving framework for multi-agent research.
+
+### 6.3 Future Directions
+
+The experimental results highlight several critical directions for future work:
+
+1. **Model Scaling**: Investigate whether larger models (7B+ parameters) or hybrid architectures (small debaters + larger judge) can achieve the theoretical benefits of mediated debate.
+
+2. **Evaluation Refinement**: Develop more sophisticated evaluation metrics that can detect sycophancy and assess correctness in resource-constrained model scenarios.
+
+3. **Prompt Engineering**: Explore advanced prompt engineering techniques to improve reasoning capabilities of smaller models.
+
+4. **Domain Adaptation**: Test the architecture on simpler problems or different domains to establish baseline performance before scaling to complex reasoning tasks.
+
+**Final Statement:** While our experimental results with the Qwen 2.5:1.5b model did not demonstrate the expected benefits of mediated debate, the theoretical framework and implementation provide a foundation for future research. The judge-mediated architecture remains a promising approach, but its effectiveness depends critically on the underlying model's reasoning capabilities. Future work should explore larger models or hybrid architectures to validate the theoretical advantages of breaking the echo chamber through centralized mediation.
 
 ---
 

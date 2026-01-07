@@ -19,19 +19,33 @@ services:
     ports:
       - "8501:8501"
     environment:
-      - OPENAI_BASE_URL=http://ollama:11434/v1
-      - OPENAI_API_KEY=ollama
-      - OLLAMA_HOST=http://ollama:11434
-      - MODEL_NAME=qwen2.5:1.5b
-      - OLLAMA_TIMEOUT=120.0
+      # Pass OpenAI API key from host (optional - for hybrid mode)
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}
+      # Local Ollama configuration (fallback)
+      - OLLAMA_BASE_URL=http://ollama:11434/v1
+      - LOCAL_MODEL=${LOCAL_MODEL:-qwen2.5:1.5b}
+      # Timeout settings
+      - API_TIMEOUT=${API_TIMEOUT:-300.0}
+      # Force local mode (skip OpenAI even if key exists)
+      - FORCE_LOCAL=${FORCE_LOCAL:-false}
+      # Debug settings
       - PYTHONUNBUFFERED=1
-      - STREAMLIT_LOGGER_LEVEL=debug
+      - DEBUG=${DEBUG:-false}
+    volumes:
+      # Mount code files for live reload (no rebuild needed)
+      - ./app.py:/app/app.py
+      - ./agents.py:/app/agents.py
+      - ./simulation.py:/app/simulation.py
+      - ./collect_experimental_data.py:/app/collect_experimental_data.py
+      # Mount .env file if it exists
+      - ./.env:/app/.env:ro
+      # Mount debate_history directory for persistence and GitHub sync
+      - ./debate_history:/app/debate_history
     depends_on:
       ollama:
         condition: service_started
-    # IMPORTANT: Code is copied into image during build, not mounted as volume
-    # To update code: Run ./update_code.sh OR: docker compose build --no-cache webapp && docker compose up -d webapp
-    command: streamlit run app.py --server.port=8501 --server.address=0.0.0.0 --logger.level=debug
+    command: streamlit run app.py --server.port=8501 --server.address=0.0.0.0
 
 volumes:
   ollama_data:
