@@ -232,13 +232,11 @@ class SmartClient:
 
         return "\n".join(texts).strip()
 
-
-
     def generate(
         self, 
         messages: List[Dict[str, str]], 
         temperature: float = 0.7, 
-        max_output_tokens: int = 4000
+        max_output_tokens: int = 2000
     ) -> Tuple[str, str]:
         """
         Generate a response using the current provider.
@@ -266,11 +264,10 @@ class SmartClient:
                     model=self.model,
                     input=input_text,
                     reasoning={"effort": "low"},
+                    text={"verbosity" : "low"},
                     max_output_tokens=max_output_tokens
                 )
-                #content = response.choices[0].message.content
                 logger.info("RAW GPT-5 RESPONSE:\n%s", response.model_dump())
-
                 content = self.extract_text_from_response(response)
                 provider_name = "OpenAI"
             
@@ -570,93 +567,6 @@ All mathematical expressions must be written clearly in LaTeX.
 Your solution should be short, correct, and complete.
 """
 
-
-#     def _olympiad_prompt(self) -> str:
-#         return f"""
-# You are {self.agent_id}, an International Mathematical Olympiad–level mathematician
-# with deep expertise in {self.role}.
-
-# Your task is to solve the given problem with a fully rigorous, competition-grade proof.
-# The goal is mathematical correctness, not intuition or explanation.
-
-# You must follow the Olympiad-Math MEDAGENTS reasoning protocol.
-
-# Reasoning protocol:
-
-# 1. Problem restatement and object integrity  
-# Restate the problem clearly and list all mathematical objects involved.
-# You may only use objects explicitly given in the problem or those that follow
-# directly and necessarily from definitions.
-# You are not allowed to introduce new objects, constructions, or assumptions
-# without explicit justification.
-
-# 2. Domain identification  
-# Identify the primary mathematical domain of the problem
-# (e.g., algebra, number theory, geometry, combinatorics).
-# If multiple domains are involved, state how they interact.
-
-# 3. Definitions and known results  
-# Explicitly state the definitions, theorems, or standard results you rely on.
-# You must use definitions exactly as stated, not heuristics or analogies.
-# If a result is used, explain why it applies in this context.
-
-# 4. Strategy selection  
-# Explain the overall strategy before executing it.
-# Justify why this strategy is appropriate for the problem.
-# Do not rely on pattern matching to familiar problems.
-
-# 5. Proof construction  
-# Construct a complete logical argument.
-# Every claim must be justified.
-# Do not skip steps.
-# Avoid informal phrases such as “clearly”, “obviously”, or “it is easy to see”.
-# If a claim depends on a condition, state that condition explicitly.
-
-# 6. Structural reasoning requirement  
-# Use structural reasoning appropriate to the domain.
-# Do not replace structural arguments with counting, enumeration,
-# or numerical intuition unless such methods are formally justified.
-
-# 7. Consistency and validity checks  
-# Actively check that:
-# - All objects used are well-defined
-# - No assumptions contradict earlier steps
-# - No definitions are misapplied
-# - No conclusions exceed what has been proven
-
-# 8. Conclusion validation  
-# Ensure the final conclusion answers exactly what is asked,
-# with no extra claims or missing cases.
-
-# Prohibitions:
-
-# - Do not introduce unjustified objects or assumptions
-# - Do not misuse definitions
-# - Do not replace proof with pattern recognition
-# - Do not accept claims without verification
-
-# Output requirements:
-
-# Structure your response using the following sections, in this exact order:
-
-# Problem Restatement and Domain  
-# Definitions and Known Results  
-# Proof  
-# Final Conclusion 
-
-# Use precise mathematical language.
-# All mathematical expressions must be written clearly using LaTeX.
-# Inline mathematics must be wrapped in single dollar signs.
-# Displayed equations must be wrapped in double dollar signs.
-
-# Before finalizing your answer, internally verify:
-# - Would this proof be accepted by an Olympiad jury?
-# - Is every step explicitly justified?
-# - Are there any unstated assumptions?
-
-# If the answer to any of these is no, revise the solution before responding.
-# """
-
     def generate_initial_answer(self, question: str) -> str:
         """Generate an initial answer to a question."""
         logger.info(f"{self.agent_id} generating initial answer")
@@ -684,7 +594,7 @@ The answer is **42**."""
         
         start_time = datetime.now()
         # Use higher max_output_tokens for detailed solutions
-        response, provider = self.client.generate(messages, max_output_tokens=800)
+        response, provider = self.client.generate(messages, max_output_tokens=2000)
         elapsed = (datetime.now() - start_time).total_seconds()
         
         self.current_answer = response
@@ -726,7 +636,7 @@ Round {round_num}: Review the peer's answer. If you find errors, explain them. I
         
         start_time = datetime.now()
         # Use higher max_output_tokens for detailed critiques and revisions
-        response, provider = self.client.generate(messages, max_output_tokens=1000)
+        response, provider = self.client.generate(messages, max_output_tokens=2000)
         elapsed = (datetime.now() - start_time).total_seconds()
         
         self.current_answer = response
@@ -768,7 +678,7 @@ Round {round_num}: Consider the judge's feedback carefully. If the judge identif
         
         start_time = datetime.now()
         # Use higher max_output_tokens for detailed revisions based on judge feedback
-        response, provider = self.client.generate(messages, max_output_tokens=1000)
+        response, provider = self.client.generate(messages, max_output_tokens=2000)
         elapsed = (datetime.now() - start_time).total_seconds()
         
         self.current_answer = response
@@ -966,7 +876,7 @@ Round {round_num}: Evaluate both solutions. Identify any errors or inconsistenci
         start_time = datetime.now()
         # Use lower temperature for judge (more consistent/deterministic)
         # Use higher max_output_tokens for detailed judge feedback
-        response, provider = self.client.generate(messages, temperature=0.3, max_output_tokens=800)
+        response, provider = self.client.generate(messages, temperature=0.3, max_output_tokens=2000)
         elapsed = (datetime.now() - start_time).total_seconds()
         
         self.history.append(response)
