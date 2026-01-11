@@ -132,7 +132,7 @@ class SmartClient:
         
         # Configuration
         self.openai_api_key = os.getenv("OPENAI_API_KEY", "").strip()
-        self.openai_model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+        self.openai_model = os.getenv("OPENAI_MODEL", "gpt-5-mini")
         self.ollama_base_url = os.getenv("OLLAMA_BASE_URL", "http://ollama:11434/v1")
         self.local_model = os.getenv("LOCAL_MODEL", "qwen2.5:1.5b")
         self.timeout = float(os.getenv("API_TIMEOUT", "300.0"))
@@ -165,7 +165,7 @@ class SmartClient:
         )
         
         if use_openai:
-            logger.info("🌐 Attempting to use OpenAI Cloud...")
+            logger.info("🌐 Attempting to use OpenAI Cloud...: ")
             try:
                 self.client = OpenAI(
                     api_key=self.openai_api_key,
@@ -181,7 +181,7 @@ class SmartClient:
             if self.force_local:
                 logger.info("🔧 FORCE_LOCAL is enabled - Using local Ollama")
             else:
-                logger.info("🔑 No valid OpenAI API key found - Using local Ollama")
+                logger.info(f"🔑 No valid OpenAI API key found - Using local Ollama {self.openai_api_key} hello")
             self._switch_to_local()
     
     def _switch_to_local(self):
@@ -201,11 +201,44 @@ class SmartClient:
             logger.error(f"❌ Failed to initialize Local client: {e}")
             raise RuntimeError(f"Cannot initialize any inference provider: {e}")
     
+    def messages_to_input(self,messages):
+        return "\n\n".join(
+            f"{m['role'].upper()}:\n{m['content']}"
+            for m in messages
+    )
+    
+    def extract_text_from_response(self, response) -> str:
+        # 1️⃣ Fast path — preferred by OpenAI
+        output_text = getattr(response, "output_text", None)
+        if output_text:
+            return output_text.strip()
+
+        texts = []
+
+        # 2️⃣ Defensive fallback
+        output = getattr(response, "output", None)
+        if not output:
+            return ""  # GPT-5 may legitimately return no visible text
+
+        for item in output:
+            content = getattr(item, "content", None)
+            if not content:
+                continue
+
+            for block in content:
+                text = getattr(block, "text", None)
+                if text:
+                    texts.append(text)
+
+        return "\n".join(texts).strip()
+
+
+
     def generate(
         self, 
         messages: List[Dict[str, str]], 
         temperature: float = 0.7, 
-        max_tokens: int = 400
+        max_output_tokens: int = 4000
     ) -> Tuple[str, str]:
         """
         Generate a response using the current provider.
@@ -213,25 +246,48 @@ class SmartClient:
         Args:
             messages: List of message dicts with 'role' and 'content'
             temperature: Sampling temperature (0.0-1.0)
-            max_tokens: Maximum tokens in response
+            max_output_tokens: Maximum tokens in response
             
         Returns:
             Tuple of (content, provider) where provider is "OpenAI" or "Local Qwen"
         """
         logger.debug(f"Generating response - Provider: {self.provider}, Model: {self.model}")
-        
+        input_text = None
         try:
             start_time = datetime.now()
+
+            # -------------------------------
+            # OPENAI GPT-5 PATH
+            # -------------------------------
+            if self.provider == "openai":
+                input_text = self.messages_to_input(messages)
+
+                response = self.client.responses.create(
+                    model=self.model,
+                    input=input_text,
+                    reasoning={"effort": "low"},
+                    max_output_tokens=max_output_tokens
+                )
+                #content = response.choices[0].message.content
+                logger.info("RAW GPT-5 RESPONSE:\n%s", response.model_dump())
+
+                content = self.extract_text_from_response(response)
+                provider_name = "OpenAI"
             
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=messages,
-                temperature=temperature,
-                max_tokens=max_tokens
-            )
-            
+            # -------------------------------
+            # Fall back 
+            # -------------------------------
+            else:
+
+                response = self.client.chat.completions.create(
+                    model=self.model,
+                    messages=messages,
+                    temperature=temperature,
+                    max_tokens=max_output_tokens
+                )
+                content = response.choices[0].message.content
+                provider_name = "Local Qwen"
             elapsed = (datetime.now() - start_time).total_seconds()
-            content = response.choices[0].message.content
             
             # Ensure readable formatting (line breaks, but preserve LaTeX)
             content = ensure_readable_formatting(content)
@@ -249,7 +305,7 @@ class SmartClient:
             if self.provider == "openai":
                 self._switch_to_local()
                 # Retry with local
-                return self.generate(messages, temperature, max_tokens)
+                return self.generate(messages, temperature, max_output_tokens)
             else:
                 # Already on local, return error
                 return f"[ERROR] API call failed: {str(e)[:100]}", "Error"
@@ -261,7 +317,7 @@ class SmartClient:
                 # Try local as fallback
                 logger.warning("🔄 Timeout on OpenAI - Switching to Local Fallback...")
                 self._switch_to_local()
-                return self.generate(messages, temperature, max_tokens)
+                return self.generate(messages, temperature, max_output_tokens)
             else:
                 # Local also timed out - return simulation
                 return self._generate_simulation_response(messages), "Simulation"
@@ -273,7 +329,7 @@ class SmartClient:
                 # Try local as fallback
                 logger.warning("🔄 Connection error on OpenAI - Switching to Local Fallback...")
                 self._switch_to_local()
-                return self.generate(messages, temperature, max_tokens)
+                return self.generate(messages, temperature, max_output_tokens)
             else:
                 # Local connection failed - return simulation
                 return self._generate_simulation_response(messages), "Simulation"
@@ -285,7 +341,7 @@ class SmartClient:
                 # Try local as fallback
                 logger.warning("🔄 Unexpected error on OpenAI - Switching to Local Fallback...")
                 self._switch_to_local()
-                return self.generate(messages, temperature, max_tokens)
+                return self.generate(messages, temperature, max_output_tokens)
             else:
                 # Return simulation as last resort
                 return self._generate_simulation_response(messages), "Simulation"
@@ -369,7 +425,7 @@ class DebateAgent:
     Uses SmartClient for hybrid inference.
     """
     
-    def __init__(self, agent_id: str, role: str, mock_mode: bool = False):
+    def __init__(self, agent_id: str, role: str, mode: str = "standard" , mock_mode: bool = False):
         """
         Initialize a debate agent.
         
@@ -378,10 +434,11 @@ class DebateAgent:
             role: Role description (e.g., "Math Expert")
             mock_mode: If True, use mock responses instead of API
         """
-        logger.info(f"Initializing DebateAgent - ID: {agent_id}, Role: {role}, Mock Mode: {mock_mode}")
+        logger.info(f"Initializing DebateAgent - ID: {agent_id}, Role: {role}, Mode: {mode} ,Mock Mode: {mock_mode}")
         
         self.agent_id = agent_id
         self.role = role
+        self.mode = mode
         self.mock_mode = mock_mode
         self.history: List[str] = []
         self.current_answer: str = ""
@@ -396,6 +453,11 @@ class DebateAgent:
         logger.info(f"DebateAgent {agent_id} initialized")
     
     def get_system_prompt(self) -> str:
+        if self.mode == "olympiad":
+            return self._olympiad_prompt()
+        return self._standard_prompt()
+    
+    def _standard_prompt(self) -> str:
         """Get the system prompt for this agent."""
         return f"""You are {self.agent_id}, a {self.role} specializing in mathematical problem-solving.
 
@@ -449,7 +511,152 @@ Sarah has **144 pages** left to read.
 ```
 
 Show your work and explain your reasoning clearly with proper Markdown and LaTeX formatting."""
-    
+
+    def _olympiad_prompt(self) -> str:
+        return f"""
+You are {self.agent_id}, an Olympiad-level mathematician.
+
+Your task is to solve the given problem correctly and rigorously.
+Focus on mathematical validity, not verbosity.
+
+General requirements:
+
+1. Problem domain  
+State the primary mathematical domain involved (e.g., algebra, number theory,
+geometry, combinatorics). If more than one domain is involved, state this briefly.
+
+2. Object discipline  
+Only use objects explicitly given in the problem or those that follow directly
+from standard definitions.
+Do not introduce new elements, fields, constructions, or assumptions
+unless they are logically forced.
+
+3. Logical justification  
+Every nontrivial claim must be justified.
+You may be concise, but your reasoning must be correct.
+Do not rely on pattern matching, counting arguments, or informal intuition
+unless they are formally valid in this context.
+
+4. Scope control  
+Answer exactly what is asked.
+Do not solve a different problem.
+Do not introduce unnecessary generalizations.
+
+5. Minimal generator and dependency check 
+Explicitly state the minimal set of objects from the problem that are sufficient
+to reach the final conclusion.
+If any given objects are redundant or dependent on others, state this clearly.
+Confirm that no additional objects were introduced.
+
+Prohibitions:
+
+- Do not invent new objects or generators
+- Do not assume results without justification
+- Do not use heuristic arguments as substitutes for logic
+- Do not appeal to “standard facts” without indicating why they apply
+
+Output format:
+
+Use the following sections only:
+
+Domain  
+Clarification / Key Reasoning  
+Minimal Generator Check  
+Final Answer 
+
+Use clear mathematical language.
+All mathematical expressions must be written clearly in LaTeX.
+
+Your solution should be short, correct, and complete.
+"""
+
+
+#     def _olympiad_prompt(self) -> str:
+#         return f"""
+# You are {self.agent_id}, an International Mathematical Olympiad–level mathematician
+# with deep expertise in {self.role}.
+
+# Your task is to solve the given problem with a fully rigorous, competition-grade proof.
+# The goal is mathematical correctness, not intuition or explanation.
+
+# You must follow the Olympiad-Math MEDAGENTS reasoning protocol.
+
+# Reasoning protocol:
+
+# 1. Problem restatement and object integrity  
+# Restate the problem clearly and list all mathematical objects involved.
+# You may only use objects explicitly given in the problem or those that follow
+# directly and necessarily from definitions.
+# You are not allowed to introduce new objects, constructions, or assumptions
+# without explicit justification.
+
+# 2. Domain identification  
+# Identify the primary mathematical domain of the problem
+# (e.g., algebra, number theory, geometry, combinatorics).
+# If multiple domains are involved, state how they interact.
+
+# 3. Definitions and known results  
+# Explicitly state the definitions, theorems, or standard results you rely on.
+# You must use definitions exactly as stated, not heuristics or analogies.
+# If a result is used, explain why it applies in this context.
+
+# 4. Strategy selection  
+# Explain the overall strategy before executing it.
+# Justify why this strategy is appropriate for the problem.
+# Do not rely on pattern matching to familiar problems.
+
+# 5. Proof construction  
+# Construct a complete logical argument.
+# Every claim must be justified.
+# Do not skip steps.
+# Avoid informal phrases such as “clearly”, “obviously”, or “it is easy to see”.
+# If a claim depends on a condition, state that condition explicitly.
+
+# 6. Structural reasoning requirement  
+# Use structural reasoning appropriate to the domain.
+# Do not replace structural arguments with counting, enumeration,
+# or numerical intuition unless such methods are formally justified.
+
+# 7. Consistency and validity checks  
+# Actively check that:
+# - All objects used are well-defined
+# - No assumptions contradict earlier steps
+# - No definitions are misapplied
+# - No conclusions exceed what has been proven
+
+# 8. Conclusion validation  
+# Ensure the final conclusion answers exactly what is asked,
+# with no extra claims or missing cases.
+
+# Prohibitions:
+
+# - Do not introduce unjustified objects or assumptions
+# - Do not misuse definitions
+# - Do not replace proof with pattern recognition
+# - Do not accept claims without verification
+
+# Output requirements:
+
+# Structure your response using the following sections, in this exact order:
+
+# Problem Restatement and Domain  
+# Definitions and Known Results  
+# Proof  
+# Final Conclusion 
+
+# Use precise mathematical language.
+# All mathematical expressions must be written clearly using LaTeX.
+# Inline mathematics must be wrapped in single dollar signs.
+# Displayed equations must be wrapped in double dollar signs.
+
+# Before finalizing your answer, internally verify:
+# - Would this proof be accepted by an Olympiad jury?
+# - Is every step explicitly justified?
+# - Are there any unstated assumptions?
+
+# If the answer to any of these is no, revise the solution before responding.
+# """
+
     def generate_initial_answer(self, question: str) -> str:
         """Generate an initial answer to a question."""
         logger.info(f"{self.agent_id} generating initial answer")
@@ -476,8 +683,8 @@ The answer is **42**."""
         ]
         
         start_time = datetime.now()
-        # Use higher max_tokens for detailed solutions
-        response, provider = self.client.generate(messages, max_tokens=800)
+        # Use higher max_output_tokens for detailed solutions
+        response, provider = self.client.generate(messages, max_output_tokens=800)
         elapsed = (datetime.now() - start_time).total_seconds()
         
         self.current_answer = response
@@ -518,8 +725,8 @@ Round {round_num}: Review the peer's answer. If you find errors, explain them. I
         ]
         
         start_time = datetime.now()
-        # Use higher max_tokens for detailed critiques and revisions
-        response, provider = self.client.generate(messages, max_tokens=1000)
+        # Use higher max_output_tokens for detailed critiques and revisions
+        response, provider = self.client.generate(messages, max_output_tokens=1000)
         elapsed = (datetime.now() - start_time).total_seconds()
         
         self.current_answer = response
@@ -560,8 +767,8 @@ Round {round_num}: Consider the judge's feedback carefully. If the judge identif
         ]
         
         start_time = datetime.now()
-        # Use higher max_tokens for detailed revisions based on judge feedback
-        response, provider = self.client.generate(messages, max_tokens=1000)
+        # Use higher max_output_tokens for detailed revisions based on judge feedback
+        response, provider = self.client.generate(messages, max_output_tokens=1000)
         elapsed = (datetime.now() - start_time).total_seconds()
         
         self.current_answer = response
@@ -581,11 +788,12 @@ class JudgeAgent:
     An impartial judge that evaluates debate agent responses.
     Uses SmartClient for hybrid inference with lower temperature for consistency.
     """
-    
-    def __init__(self, mock_mode: bool = False):
+     
+    def __init__(self, mode: str = "standard" , mock_mode: bool = False):
         """Initialize the judge agent."""
         logger.info(f"Initializing JudgeAgent - Mock Mode: {mock_mode}")
         
+        self.mode = mode
         self.mock_mode = mock_mode
         self.history: List[str] = []
         self.last_provider: str = ""
@@ -599,6 +807,11 @@ class JudgeAgent:
         logger.info("JudgeAgent initialized")
     
     def get_system_prompt(self) -> str:
+            if self.mode == "olympiad":
+                return self._olympiad_prompt()
+            return self._standard_prompt()
+
+    def _standard_prompt(self) -> str:
         """Get the system prompt for the judge."""
         return """You are a critical Judge. Your role is to evaluate mathematical solutions impartially.
 
@@ -652,6 +865,70 @@ Both agents need to revise their solutions. Agent A has a calculation error. Age
 
 Focus on mathematical correctness above all else, and present your evaluation in clear, structured Markdown format."""
 
+    def _olympiad_prompt(self) -> str:
+        return """
+You are an Olympiad-level mathematical judge.
+
+Your role is to evaluate proposed solutions with the rigor of an International
+Mathematical Olympiad jury.
+
+You are not a solver.
+You must not construct, extend, repair, or complete any solution.
+You only verify correctness.
+
+Judging principles:
+
+1. Verification only  
+Do not re-derive results, introduce new objects, or supply missing arguments.
+If a required justification is missing, the solution is incorrect.
+
+2. Object and assumption discipline  
+Reject immediately if a solution introduces:
+- objects not present in the problem,
+- unstated assumptions,
+- unjustified algebraic entities.
+
+3. Logical validity  
+Every nontrivial claim must be justified.
+Invalid implications, misuse of theorems, or logical gaps are fatal errors.
+
+4. Internal consistency  
+Check for contradictions or false statements.
+A single inconsistency is sufficient for rejection.
+
+5. First-fatal-error rule (FFED)  
+If a solution is incorrect, identify the first logically essential step where it fails.
+Stop evaluation at that point.
+Do not attempt to interpret intent or salvage correctness.
+
+Judgment rules:
+
+- If both solutions are fully correct and complete, state exactly:
+  "CONSENSUS: Both solutions are correct."
+
+- Otherwise, for each incorrect solution:
+  - State REJECTED
+  - Identify the first fatal error
+  - Explain briefly why it is invalid
+  - Do not provide a corrected solution
+
+Output format:
+
+Use the following sections only, in this exact order:
+
+Evaluation of Agent A  
+Evaluation of Agent B  
+Overall Assessment  
+
+Use concise, precise mathematical language.
+Do not include rewritten proofs, new derivations, emojis,
+or commentary outside the required sections.
+
+Be strict.
+Only accept solutions that would be accepted by an Olympiad jury.
+"""
+
+    
     def critique(self, question: str, agent_a_answer: str, agent_b_answer: str, round_num: int) -> str:
         """Evaluate both agents' answers and provide feedback."""
         logger.info(f"Judge evaluating answers in round {round_num}")
@@ -688,8 +965,8 @@ Round {round_num}: Evaluate both solutions. Identify any errors or inconsistenci
         
         start_time = datetime.now()
         # Use lower temperature for judge (more consistent/deterministic)
-        # Use higher max_tokens for detailed judge feedback
-        response, provider = self.client.generate(messages, temperature=0.3, max_tokens=800)
+        # Use higher max_output_tokens for detailed judge feedback
+        response, provider = self.client.generate(messages, temperature=0.3, max_output_tokens=800)
         elapsed = (datetime.now() - start_time).total_seconds()
         
         self.history.append(response)
@@ -731,7 +1008,7 @@ def test_connection() -> Tuple[bool, str, str]:
         client = SmartClient()
         response, provider = client.generate(
             [{"role": "user", "content": "Say 'Hello' in one word."}],
-            max_tokens=5,
+            max_output_tokens=5,
             temperature=0.1
         )
         

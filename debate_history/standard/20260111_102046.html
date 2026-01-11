@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Standard Debate (Peer-to-Peer) - 20260111_102046</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+        .header .meta {
+            margin-top: 10px;
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        .question-box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .question-box h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        .message {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .message-header {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        .agent-a { border-left: 4px solid #4CAF50; }
+        .agent-b { border-left: 4px solid #2196F3; }
+        .judge { border-left: 4px solid #FF9800; }
+        .final-answers {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .final-answer {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .final-answer h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            font-family: inherit;
+        }
+        .round-header {
+            background: #667eea;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin: 20px 0 10px 0;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Standard Debate (Peer-to-Peer)</h1>
+        <div class="meta">
+            Timestamp: 20260111 102046 | 
+            Rounds: 4 | 
+            Type: Standard
+        </div>
+    </div>
+    
+    <div class="question-box">
+        <h2>📝 Question</h2>
+        <p>Janet's ducks lay eggs. She gets 3 times as many eggs from her ducks as she gets from her chickens. If she gets 3 eggs from her chickens, how many eggs does she get from her ducks?</p>
+    </div>
+<div class="round-header">Round 0</div>
+
+            <div class="message agent-a">
+                <div class="message-header">🤖 Agent A - Initial Answer</div>
+                <pre>### Step 1: Identify key information
+
+- Janet gets **3 times** as many eggs from her ducks as from her chickens.  
+- She gets **3 eggs** from her chickens.  
+
+
+### Step 2: Set up the relationship
+
+- Let ducks' eggs = $D$.  
+- Chickens' eggs = $3$.  
+- Relationship: $D = 3 \times 3$.
+
+
+### Step 3: Calculate
+
+$$D = 3 \times 3 = 9$$
+
+
+### Conclusion
+
+Janet gets **9 eggs** from her ducks.</pre>
+            </div>
+            <div class="message agent-b">
+                <div class="message-header">🤖 Agent B - Initial Answer</div>
+                <pre>### Step 1: Identify Key Information
+- Janet gets **3 times** as many eggs from her ducks as from her chickens.  
+- She gets **3 eggs** from her chickens.
+
+  
+
+### Step 2: Set Up the Relationship
+- Let the number of eggs from ducks be $D$.  
+- The relationship is $D = 3 \times C$, where $C$ is the number of eggs from chickens.  
+- Here $C = 3$.
+
+  
+
+### Step 3: Calculate
+
+$$D = 3 \times 3 = 9 \text{ eggs}$$
+
+  
+
+### Conclusion
+- Janet gets **9 eggs** from her ducks.</pre>
+            </div>
+<div class="round-header">Round 1</div>
+
+            <div class="message agent-a">
+                <div class="message-header">🤖 Agent A - Revision</div>
+                <pre>### Step 1: Review of the peer's answer
+
+- The peer correctly identified that the ducks produce **3 times** the eggs of the chickens.  
+- They correctly set $C = 3$ for the chickens and $D = 3 \times C$ for the ducks.  
+- Their calculation $$D = 3 \times 3 = 9 \text{ eggs}$$ is correct and matches the problem statement.  
+
+
+### Step 2: Verdict
+
+- The peer's answer is correct and clear. I agree with it.  
+
+
+### Step 3: Confirmed solution
+
+- Chickens' eggs: **3**.  
+- Ducks' eggs: $D = 3 \times 3$.
+
+$$D = 3 \times 3 = 9 \text{ eggs}$$
+
+### Conclusion
+
+Janet gets **9 eggs** from her ducks.</pre>
+            </div>
+            <div class="message agent-b">
+                <div class="message-header">🤖 Agent B - Revision</div>
+                <pre>### Step 1: Review of the peer's answer
+
+- The peer identified that the ducks produce **3 times** as many eggs as the chickens.  
+- They correctly set $C = 3$ for the chickens and $D = 3 \times C$ for the ducks.  
+- Their calculation and conclusion are consistent with the problem statement.  
+
+
+### Step 2: Check for Errors
+
+- No errors found: the relationship $D = 3 \times C$ is correct and substituting $C = 3$ is valid.  
+- The arithmetic $D = 3 \times 3 = 9$ is correct.  
+
+
+### Step 3: Calculation (reproduced)
+
+- Let $C$ be chickens' eggs and $D$ be ducks' eggs.  
+- Given $C = 3$ and $D = 3 \times C$.
+
+$$D = 3 \times 3 = 9 \ 	ext{eggs}$$
+
+
+### Conclusion
+
+- Janet gets **9 eggs** from her ducks.</pre>
+            </div>
+<div class="round-header">Round 2</div>
+
+            <div class="message agent-a">
+                <div class="message-header">🤖 Agent A - Revision</div>
+                <pre>### Step 1: Review of the peer's answer
+
+- The peer correctly understood the relationship: ducks produce **3 times** as many eggs as chickens.  
+- They correctly set $C = 3$ for the chickens and $D = 3 \times C$ for the ducks.  
+
+
+### Step 2: Check for Errors
+
+- No errors found: the formula $D = 3 \times C$ is correct and substituting $C = 3$ is valid.  
+- The arithmetic $$D = 3 \times 3 = 9 \ \text{eggs}$$ is correct.  
+
+
+### Step 3: Confirmed solution
+
+- Chickens' eggs: **3**.  
+- Ducks' eggs: $D = 3 \times 3$.
+
+$$D = 3 \times 3 = 9 \ \text{eggs}$$
+
+
+### Conclusion
+
+- Janet gets **9 eggs** from her ducks.</pre>
+            </div>
+            <div class="message agent-b">
+                <div class="message-header">🤖 Agent B - Revision</div>
+                <pre>### Step 1: Review of the peer's answer
+
+- The peer correctly interpreted the problem: the number of eggs from ducks is **3 times** the number from chickens.  
+- They set $C = 3$ for chickens' eggs and $D = 3 \times C$ for ducks' eggs, which matches the statement.  
+
+
+### Step 2: Check for Errors
+
+- No errors found in reasoning or arithmetic.  
+- Substituting $C = 3$ into $D = 3 \times C$ is valid and the multiplication is correct.  
+
+
+### Step 3: Calculation (reproduced)
+
+- Let $C$ be the number of eggs from chickens and $D$ be the number from ducks.  
+- Given $C = 3$ and $D = 3 \times C$.
+
+$$D = 3 \times 3 = 9 \ \text{eggs}$$
+
+
+### Conclusion
+
+- The peer's solution is correct. Janet gets **9 eggs** from her ducks.</pre>
+            </div>
+<div class="round-header">Round 3</div>
+
+            <div class="message agent-a">
+                <div class="message-header">🤖 Agent A - Revision</div>
+                <pre>### Step 1: Analysis of the peer's answer
+
+- The problem states ducks produce **3 times** as many eggs as chickens.  
+- The peer let $C$ denote chickens' eggs and $D$ denote ducks' eggs, with $C = 3$ and $D = 3 \times C$.  
+
+
+### Step 2: Check for errors
+
+- The relationship $D = 3 \times C$ correctly models "3 times as many."  
+- Substituting $C = 3$ is correct.  
+- The arithmetic $$D = 3 \times 3 = 9 \ 	ext{eggs}$$ is correct.  
+
+
+### Step 3: Conclusion and confirmation
+
+- The peer's solution is correct and clear.  
+- Therefore Janet gets **9 eggs** from her ducks.</pre>
+            </div>
+            <div class="message agent-b">
+                <div class="message-header">🤖 Agent B - Revision</div>
+                <pre>### Step 1: Review Summary
+
+- The peer interpreted the problem correctly: ducks produce **3 times** as many eggs as chickens.  
+- They defined $C$ for chickens' eggs and $D$ for ducks' eggs, with $C = 3$ and $D = 3 \times C$.  
+
+
+### Step 2: Check for Errors
+
+- The model $D = 3 \times C$ accurately represents "3 times as many."  
+- Substituting $C = 3$ is correct.  
+- The arithmetic performed is correct.  
+
+
+### Step 3: Reproduce Calculation
+
+- Let $C$ be the number of eggs from chickens and $D$ be the number from ducks.  
+- Given $C = 3$ and $D = 3 \times C$.
+
+$$D = 3 \times 3 = 9 \ \text{eggs}$$
+
+
+### Conclusion
+
+- The peer's solution is correct. Janet gets **9 eggs** from her ducks.</pre>
+            </div>
+
+    <div class="final-answers">
+        <div class="final-answer">
+            <h3>🤖 Agent A - Final Answer</h3>
+            <pre>### Step 1: Analysis of the peer's answer
+
+- The problem states ducks produce **3 times** as many eggs as chickens.  
+- The peer let $C$ denote chickens' eggs and $D$ denote ducks' eggs, with $C = 3$ and $D = 3 \times C$.  
+
+
+### Step 2: Check for errors
+
+- The relationship $D = 3 \times C$ correctly models "3 times as many."  
+- Substituting $C = 3$ is correct.  
+- The arithmetic $$D = 3 \times 3 = 9 \ 	ext{eggs}$$ is correct.  
+
+
+### Step 3: Conclusion and confirmation
+
+- The peer's solution is correct and clear.  
+- Therefore Janet gets **9 eggs** from her ducks.</pre>
+        </div>
+        <div class="final-answer">
+            <h3>🤖 Agent B - Final Answer</h3>
+            <pre>### Step 1: Review Summary
+
+- The peer interpreted the problem correctly: ducks produce **3 times** as many eggs as chickens.  
+- They defined $C$ for chickens' eggs and $D$ for ducks' eggs, with $C = 3$ and $D = 3 \times C$.  
+
+
+### Step 2: Check for Errors
+
+- The model $D = 3 \times C$ accurately represents "3 times as many."  
+- Substituting $C = 3$ is correct.  
+- The arithmetic performed is correct.  
+
+
+### Step 3: Reproduce Calculation
+
+- Let $C$ be the number of eggs from chickens and $D$ be the number from ducks.  
+- Given $C = 3$ and $D = 3 \times C$.
+
+$$D = 3 \times 3 = 9 \ \text{eggs}$$
+
+
+### Conclusion
+
+- The peer's solution is correct. Janet gets **9 eggs** from her ducks.</pre>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,45 @@
+{
+  "question": "Janet's ducks lay eggs. She gets 3 times as many eggs from her ducks as she gets from her chickens. If she gets 3 eggs from her chickens, how many eggs does she get from her ducks?",
+  "method": "standard",
+  "rounds": 3,
+  "log": [
+    {
+      "round": 0,
+      "type": "initial",
+      "agent_a": "",
+      "agent_b": ""
+    },
+    {
+      "round": 1,
+      "type": "critique",
+      "agent_a": "",
+      "agent_b": ""
+    },
+    {
+      "round": 2,
+      "type": "critique",
+      "agent_a": "",
+      "agent_b": ""
+    },
+    {
+      "round": 3,
+      "type": "critique",
+      "agent_a": "",
+      "agent_b": ""
+    }
+  ],
+  "final_agent_a": "",
+  "final_agent_b": "",
+  "agent_a_history": [
+    "",
+    "",
+    "",
+    ""
+  ],
+  "agent_b_history": [
+    "",
+    "",
+    "",
+    ""
+  ]
+}

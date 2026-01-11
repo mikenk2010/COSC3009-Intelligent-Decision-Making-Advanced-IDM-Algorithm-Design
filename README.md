@@ -21,11 +21,14 @@ A Dockerized multi-agent debate system comparing **Standard Debate** (peer-to-pe
 ## Features
 
 - 🤖 **Local LLM Inference**: Uses Ollama with Qwen 2.5 (1.5B) - optimized for CPU and speed
+- ☁️ **OpenAI Cloud Support**: Optional high-accuracy inference using GPT-5 mini, with seamless fallback to local Ollama
 - 🐳 **Fully Dockerized**: Run everything with `docker compose up`
 - 📊 **Side-by-Side Comparison**: Visual comparison of debate methods
 - ⚖️ **Judge-Mediated Architecture**: Breaks echo chamber with impartial arbitrator
+- 🏅 **Olympiad Math Mode**: Competition-grade solver and jury agents with strict object discipline and first-fatal-error verification
 - 🔍 **System Status Monitoring**: Real-time Ollama connectivity and model status
 - 🛡️ **Robust Error Handling**: Automatic fallback to simulation mode on timeout/errors - **never crashes**
+
 
 ## Architecture
 

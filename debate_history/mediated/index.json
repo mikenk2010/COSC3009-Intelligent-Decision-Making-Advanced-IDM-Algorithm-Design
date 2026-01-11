@@ -1,5 +1,65 @@
 [
   {
+    "timestamp": "20260111_105658",
+    "question": "Janet's ducks lay eggs. She gets 3 times as many eggs from her ducks as she gets from her chickens. ",
+    "html_file": "20260111_105658.html",
+    "json_file": "20260111_105658.json"
+  },
+  {
+    "timestamp": "20260111_105521",
+    "question": "Let p = (1, 2, 5, 4)(2, 3) in S_5 . Find the index of <p> in S_5.",
+    "html_file": "20260111_105521.html",
+    "json_file": "20260111_105521.json"
+  },
+  {
+    "timestamp": "20260111_104642",
+    "question": "Let p = (1, 2, 5, 4)(2, 3) in S_5 . Find the index of <p> in S_5.",
+    "html_file": "20260111_104642.html",
+    "json_file": "20260111_104642.json"
+  },
+  {
+    "timestamp": "20260111_104318",
+    "question": "Find all zeros in the indicated finite field of the given polynomial with coefficients in that field",
+    "html_file": "20260111_104318.html",
+    "json_file": "20260111_104318.json"
+  },
+  {
+    "timestamp": "20260111_044004",
+    "question": "Janet's ducks lay eggs. She gets 3 times as many eggs from her ducks as she gets from her chickens. ",
+    "html_file": "20260111_044004.html",
+    "json_file": "20260111_044004.json"
+  },
+  {
+    "timestamp": "20260111_030548",
+    "question": "Let p = (1, 2, 5, 4)(2, 3) in S_5 . Find the index of <p> in S_5.",
+    "html_file": "20260111_030548.html",
+    "json_file": "20260111_030548.json"
+  },
+  {
+    "timestamp": "20260111_025333",
+    "question": "Let p = (1, 2, 5, 4)(2, 3) in S_5 . Find the index of <p> in S_5.",
+    "html_file": "20260111_025333.html",
+    "json_file": "20260111_025333.json"
+  },
+  {
+    "timestamp": "20260111_024657",
+    "question": "Find the degree for the given field extension Q(sqrt(2), sqrt(3), sqrt(18)) over Q.",
+    "html_file": "20260111_024657.html",
+    "json_file": "20260111_024657.json"
+  },
+  {
+    "timestamp": "20260111_014614",
+    "question": "Find the degree for the given field extension Q(sqrt(2), sqrt(3), sqrt(18)) over Q.",
+    "html_file": "20260111_014614.html",
+    "json_file": "20260111_014614.json"
+  },
+  {
+    "timestamp": "20260111_013329",
+    "question": "Find the degree for the given field extension Q(sqrt(2), sqrt(3), sqrt(18)) over Q.",
+    "html_file": "20260111_013329.html",
+    "json_file": "20260111_013329.json"
+  },
+  {
     "timestamp": "20260107_172811",
     "question": "Janet's ducks lay eggs. She gets 3 times as many eggs from her ducks as she gets from her chickens. ",
     "html_file": "20260107_172811.html",
