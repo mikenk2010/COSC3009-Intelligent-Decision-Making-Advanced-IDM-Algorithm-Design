@@ -19,7 +19,7 @@ A Dockerized multi-agent debate system comparing **Standard Debate** (peer-to-pe
 <img width="1170" height="566" alt="image" src="https://github.com/user-attachments/assets/fc05d8b6-22c8-4f6c-bea5-ffdd263c4f95" />
 
 - Olympiad Mode
-<img width="3442" height="1934" alt="image" src="https://github.com/user-attachments/assets/7aba1732-0f89-4974-acc3-a45f54982944" />
+<img width="3450" height="1928" alt="image" src="https://github.com/user-attachments/assets/89977246-d688-4d0b-8b72-6357bff6bad3" />
 
 
 
