@@ -37,8 +37,9 @@ A Dockerized multi-agent debate system comparing **Standard Debate** (peer-to-pe
 
 ## Architecture
 
-- **Service 1 (ollama)**: Runs Ollama inference server with Qwen 2.5 model
-- **Service 2 (webapp)**: Streamlit UI + Python debate logic
+- **Service 1 (ollama)**: Local inference server running open-source models (e.g. Qwen 2.5) for fast, CPU-optimized reasoning
+- **Service 2 (webapp)**: Streamlit UI + Python debate engine (agents, judge, Olympiad mode logic)
+- **External Service (OpenAI Cloud)**: Optional high-accuracy inference using GPT-5 mini, integrated as a drop-in backend with automatic fallback to local Ollama
 
 ## Quick Start
 
