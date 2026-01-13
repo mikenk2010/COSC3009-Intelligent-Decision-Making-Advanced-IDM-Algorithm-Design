@@ -267,7 +267,6 @@ class SmartClient:
                     text={"verbosity" : "low"},
                     max_output_tokens=max_output_tokens
                 )
-                logger.info("RAW GPT-5 RESPONSE:\n%s", response.model_dump())
                 content = self.extract_text_from_response(response)
                 provider_name = "OpenAI"
             

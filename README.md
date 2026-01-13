@@ -26,14 +26,17 @@ A Dockerized multi-agent debate system comparing **Standard Debate** (peer-to-pe
 - 📊 **Side-by-Side Comparison**: Visual comparison of debate methods
 - ⚖️ **Judge-Mediated Architecture**: Breaks echo chamber with impartial arbitrator
 - 🏅 **Olympiad Math Mode**: Competition-grade solver and jury agents with strict object discipline and first-fatal-error verification
+- 📚 **Expanded Evaluation Dataset**: 57 curated subject areas spanning mathematics, logic, and structured reasoning tasks
 - 🔍 **System Status Monitoring**: Real-time Ollama connectivity and model status
-- 🛡️ **Robust Error Handling**: Automatic fallback to simulation mode on timeout/errors - **never crashes**
+- 🛡️ **Robust Error Handling**: Automatic fallback to simulation mode on timeout/errors — **never crashes**
 
 
 ## Architecture
 
-- **Service 1 (ollama)**: Runs Ollama inference server with Qwen 2.5 model
-- **Service 2 (webapp)**: Streamlit UI + Python debate logic
+- **Service 1 (ollama)**: Local inference server running open-source models (e.g. Qwen 2.5) for fast, CPU-optimized reasoning
+- **Service 2 (webapp)**: Streamlit UI + Python debate engine (agents, judge, Olympiad mode logic)
+- **External Service (OpenAI Cloud)**: Optional high-accuracy inference using GPT-5 mini, integrated as a drop-in backend with automatic fallback to local Ollama
+
 
 ## Quick Start
 
@@ -41,7 +44,7 @@ A Dockerized multi-agent debate system comparing **Standard Debate** (peer-to-pe
 
 - Docker and Docker Compose installed
 - At least 4GB RAM available for Ollama
-- Internet connection (for initial model download)
+- Internet connection (for initial model download and OpenAI API calls)
 
 ### Step 1: Start the Services
 
@@ -51,7 +54,7 @@ docker compose up --build
 
 **Note:** Use `docker compose` (with space) for Docker Compose V2, or `docker-compose` (with hyphen) for older versions.
 
-### Step 2: Download the Model
+### Step 2: Download the Model or Defined OPENAI_API_KEY 
 
 Wait for Ollama to start (about 30 seconds), then in a **new terminal**, run:
 
@@ -113,6 +116,106 @@ docker compose down -v
   2. Judge evaluates both and provides critical feedback
   3. Agents revise based on judge's feedback
 - **Benefit**: Breaks echo chamber, forces error correction
+
+### Olympiad Mode (Improved)
+
+Olympiad Mode introduces **competition-grade reasoning constraints** inspired by
+International Mathematical Olympiad (IMO) standards.
+
+It replaces conversational debate behavior with **formal mathematical roles**:
+
+#### Olympiad Agent
+- Acts as an Olympiad-level problem solver
+- States the problem domain explicitly
+- Uses strict object discipline (no invented assumptions)
+- Justifies every nontrivial claim
+- Focuses on correctness over verbosity
+
+#### Olympiad Judge
+- Acts as an Olympiad jury member
+- Does **not** solve or repair solutions
+- Enforces definitions, assumptions, and logical completeness
+- Applies a **first-fatal-error rule**: a single logical flaw is sufficient for rejection
+- Declares consensus only if solutions are fully correct
+
+## Dataset Coverage & Evaluation
+
+The system is evaluated on an expanded benchmark covering **57 subject areas**, designed to test
+reasoning accuracy, domain discipline, and judge strictness across both technical and non-technical domains.
+
+Each subject contains 3 representative questions, with accuracy measured under the
+judge-mediated evaluation pipeline.
+
+### Subject-Level Results
+
+| Subject                      |  N | Accuracy | Std. Error |
+| ---------------------------- | -: | -------: | ---------: |
+| Abstract Algebra             |  3 |     1.00 |      0.000 |
+| Anatomy                      |  3 |     0.67 |      0.272 |
+| Astronomy                    |  3 |     1.00 |      0.000 |
+| Business Ethics              |  3 |     1.00 |      0.000 |
+| Clinical Knowledge           |  3 |     1.00 |      0.000 |
+| College Biology              |  3 |     1.00 |      0.000 |
+| College Chemistry            |  3 |     0.67 |      0.272 |
+| College Computer Science     |  3 |     1.00 |      0.000 |
+| College Mathematics          |  3 |     1.00 |      0.000 |
+| College Medicine             |  3 |     0.67 |      0.272 |
+| College Physics              |  3 |     1.00 |      0.000 |
+| Computer Security            |  3 |     1.00 |      0.000 |
+| Conceptual Physics           |  3 |     1.00 |      0.000 |
+| Econometrics                 |  3 |     1.00 |      0.000 |
+| Electrical Engineering       |  3 |     0.67 |      0.272 |
+| Elementary Mathematics       |  3 |     1.00 |      0.000 |
+| Formal Logic                 |  3 |     1.00 |      0.000 |
+| Global Facts                 |  3 |     0.67 |      0.272 |
+| High School Biology          |  3 |     0.67 |      0.272 |
+| High School Chemistry        |  3 |     0.67 |      0.272 |
+| High School Computer Science |  3 |     1.00 |      0.000 |
+| High School European History |  3 |     1.00 |      0.000 |
+| High School Geography        |  3 |     1.00 |      0.000 |
+| High School Gov & Politics   |  3 |     1.00 |      0.000 |
+| High School Macroeconomics   |  3 |     0.67 |      0.272 |
+| High School Mathematics      |  3 |     1.00 |      0.000 |
+| High School Microeconomics   |  3 |     1.00 |      0.000 |
+| High School Physics          |  3 |     1.00 |      0.000 |
+| High School Psychology       |  3 |     1.00 |      0.000 |
+| High School Statistics       |  3 |     1.00 |      0.000 |
+| High School US History       |  3 |     1.00 |      0.000 |
+| High School World History    |  3 |     1.00 |      0.000 |
+| Human Aging                  |  3 |     1.00 |      0.000 |
+| Human Sexuality              |  3 |     1.00 |      0.000 |
+| International Law            |  3 |     1.00 |      0.000 |
+| Jurisprudence                |  3 |     0.67 |      0.272 |
+| Logical Fallacies            |  3 |     1.00 |      0.000 |
+| Machine Learning             |  3 |     1.00 |      0.000 |
+| Management                   |  3 |     1.00 |      0.000 |
+| Marketing                    |  3 |     1.00 |      0.000 |
+| Medical Genetics             |  3 |     1.00 |      0.000 |
+| Miscellaneous                |  3 |     1.00 |      0.000 |
+| Moral Disputes               |  3 |     1.00 |      0.000 |
+| Moral Scenarios              |  3 |     1.00 |      0.000 |
+| Nutrition                    |  3 |     1.00 |      0.000 |
+| Philosophy                   |  3 |     1.00 |      0.000 |
+| Prehistory                   |  3 |     1.00 |      0.000 |
+| Professional Accounting      |  3 |     1.00 |      0.000 |
+| Professional Law             |  3 |     1.00 |      0.000 |
+| Professional Medicine        |  3 |     1.00 |      0.000 |
+| Professional Psychology      |  3 |     1.00 |      0.000 |
+| Public Relations             |  3 |     1.00 |      0.000 |
+| Security Studies             |  3 |     0.67 |      0.272 |
+| Sociology                    |  3 |     1.00 |      0.000 |
+| US Foreign Policy            |  3 |     0.67 |      0.272 |
+| Virology                     |  3 |     0.67 |      0.272 |
+| World Religions              |  3 |     1.00 |      0.000 |
+
+**Notes:**
+- Accuracy reflects judge-validated correctness, not self-reported confidence.
+- Lower scores typically correspond to ambiguity, missing justification, or assumption violations.
+- Olympiad Mode applies stricter rejection criteria than standard debate.
+
+**Purpose**:  
+To evaluate mathematical reasoning at a competition standard rather than conversational plausibility.
+
 
 ## Configuration
 
