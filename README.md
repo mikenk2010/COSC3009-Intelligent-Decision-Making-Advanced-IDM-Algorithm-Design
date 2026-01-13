@@ -1,8 +1,11 @@
 # Multi-Agent Debate System with Judge Mediation
 
-A Dockerized multi-agent debate system comparing **Standard Debate** (peer-to-peer) vs. **Mediated Debate** (with judge arbitrator) using local open-source LLMs via Ollama.
+A Dockerized multi-agent debate system comparing **Standard Debate** (peer-to-peer) vs. **Mediated Debate** (with judge arbitrator) with Olympiad mode using local open-source LLMs via Ollama.
 
-<img width="1774" height="1029" alt="image" src="https://github.com/user-attachments/assets/581cbe7f-63c1-475c-aef9-9cfa9189aafd" />
+<img width="3446" height="1930" alt="image" src="https://github.com/user-attachments/assets/fdfe1ecf-b64c-4074-8a44-f297c267e44e" />
+<img width="3442" height="1934" alt="image" src="https://github.com/user-attachments/assets/26f338f5-5990-42e8-a879-1db28c0cd30c" />
+
+
 
 ## Screenshots
 - Problem: `A coffee shop sells coffee for $2.50 per cup and tea for $1.75 per cup. If a customer buys 4 cups of coffee and 3 cups of tea, how much does the customer pay in total?`
@@ -15,6 +18,8 @@ A Dockerized multi-agent debate system comparing **Standard Debate** (peer-to-pe
 - Mediated Debate (With Judge)
 <img width="1170" height="566" alt="image" src="https://github.com/user-attachments/assets/fc05d8b6-22c8-4f6c-bea5-ffdd263c4f95" />
 
+- Olympiad Mode
+<img width="3450" height="1928" alt="image" src="https://github.com/user-attachments/assets/89977246-d688-4d0b-8b72-6357bff6bad3" />
 
 
 
@@ -36,7 +41,10 @@ A Dockerized multi-agent debate system comparing **Standard Debate** (peer-to-pe
 - **Service 1 (ollama)**: Local inference server running open-source models (e.g. Qwen 2.5) for fast, CPU-optimized reasoning
 - **Service 2 (webapp)**: Streamlit UI + Python debate engine (agents, judge, Olympiad mode logic)
 - **External Service (OpenAI Cloud)**: Optional high-accuracy inference using GPT-5 mini, integrated as a drop-in backend with automatic fallback to local Ollama
+<<<<<<< HEAD
 
+=======
+>>>>>>> refs/remotes/origin/olympiad-mode
 
 ## Quick Start
 
@@ -138,6 +146,12 @@ It replaces conversational debate behavior with **formal mathematical roles**:
 - Applies a **first-fatal-error rule**: a single logical flaw is sufficient for rejection
 - Declares consensus only if solutions are fully correct
 
+<<<<<<< HEAD
+=======
+**Purpose**:  
+To evaluate mathematical reasoning at a competition standard rather than conversational plausibility.
+
+>>>>>>> refs/remotes/origin/olympiad-mode
 ## Dataset Coverage & Evaluation
 
 The system is evaluated on an expanded benchmark covering **57 subject areas**, designed to test
@@ -213,9 +227,12 @@ judge-mediated evaluation pipeline.
 - Lower scores typically correspond to ambiguity, missing justification, or assumption violations.
 - Olympiad Mode applies stricter rejection criteria than standard debate.
 
+<<<<<<< HEAD
 **Purpose**:  
 To evaluate mathematical reasoning at a competition standard rather than conversational plausibility.
 
+=======
+>>>>>>> refs/remotes/origin/olympiad-mode
 
 ## Configuration
 
@@ -231,14 +248,31 @@ The application uses these environment variables (set in `docker-compose.yml`):
 
 ### Model Selection
 
-The system uses `qwen2.5:1.5b` by default. This model is:
-- **Fast**: Optimized for CPU inference
-- **Lightweight**: Only 1.5B parameters
-- **Reliable**: Better timeout handling than larger models
+The system uses a **hybrid inference strategy** with automatic fallback.
 
-To use a different model:
-1. Edit `docker-compose.yml` and change `MODEL_NAME`
-2. Pull the new model: `docker exec -it ollama-server ollama pull <model-name>`
+#### Inference Priority
+
+1. **OpenAI Cloud (GPT-5 mini)** — if a valid API key is available  
+2. **Local Ollama (Qwen 2.5:1.5B)** — automatic fallback if cloud inference is unavailable
+
+This ensures **maximum accuracy when possible** and **full offline reliability** when needed.
+
+---
+
+#### OpenAI Cloud (Primary)
+
+When an OpenAI API key is present, the system prioritizes **GPT-5 mini**:
+- **Higher reasoning accuracy** for complex logic and mathematics
+- **Stronger consistency** in multi-agent debate and judging
+- **No code changes required** — drop-in backend
+
+To enable:
+1. Get API key from [OpenAI](https://platform.openai.com/api-keys)
+2. Create `.env` file:
+```
+OPENAI_API_KEY=sk-your-key
+```
+3. Restart: `docker compose down && docker compose up -d`
 
 ## Error Handling & Fallback
 
