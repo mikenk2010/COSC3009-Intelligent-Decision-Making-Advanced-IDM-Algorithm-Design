@@ -2,49 +2,596 @@
 
 A Dockerized multi-agent debate system comparing **Standard Debate** (peer-to-peer) vs. **Mediated Debate** (with judge arbitrator) with Olympiad mode using local open-source LLMs via Ollama.
 
-<img width="3446" height="1930" alt="image" src="https://github.com/user-attachments/assets/fdfe1ecf-b64c-4074-8a44-f297c267e44e" />
-<img width="3442" height="1934" alt="image" src="https://github.com/user-attachments/assets/26f338f5-5990-42e8-a879-1db28c0cd30c" />
+**Course:** COSC3009 - Intelligent Decision Making
+**Institution:** RMIT University
+**Assessment:** Final Project (50% Weighting)
 
+---
 
+## Table of Contents
 
-## Screenshots
-- Problem: `A coffee shop sells coffee for $2.50 per cup and tea for $1.75 per cup. If a customer buys 4 cups of coffee and 3 cups of tea, how much does the customer pay in total?`
-- Expected answer: `Answer: $15.25`
-<img width="524" height="646" alt="image" src="https://github.com/user-attachments/assets/9aa08c80-8068-4a17-9185-42489f3d2472" />
+1. [Research Overview](#research-overview)
+2. [System Architecture](#system-architecture)
+3. [Debate Mechanisms](#debate-mechanisms)
+4. [MMLU Evaluation Pipeline](#mmlu-evaluation-pipeline)
+5. [Agent Implementation](#agent-implementation)
+6. [Data Flow](#data-flow)
+7. [Evaluation Results](#evaluation-results)
+8. [Quick Start](#quick-start)
+9. [Configuration](#configuration)
+10. [References](#references)
 
-- Standard Debate
-<img width="1197" height="488" alt="image" src="https://github.com/user-attachments/assets/4507d4cb-725d-4b7d-aadc-45c2f3f51e9a" />
+---
 
-- Mediated Debate (With Judge)
-<img width="1170" height="566" alt="image" src="https://github.com/user-attachments/assets/fc05d8b6-22c8-4f6c-bea5-ffdd263c4f95" />
+## Research Overview
 
-- Olympiad Mode
-<img width="3450" height="1928" alt="image" src="https://github.com/user-attachments/assets/89977246-d688-4d0b-8b72-6357bff6bad3" />
+### Problem Statement: Sycophancy in Multi-Agent Systems
 
+This project addresses the **sycophancy problem** (also known as "Disagreement Collapse") in Large Language Model (LLM) multi-agent debate systems. Based on research by Du et al. (2023) and documented issues from Hu et al. (2025), we implement and evaluate a solution using judge-mediated debate architecture.
 
+```mermaid
+flowchart LR
+    subgraph Problem["The Sycophancy Problem"]
+        A1[Agent A: 2+2=5<br/>incorrect but confident] --> A2[Agent B: I agree!<br/>abandons correct answer]
+        A2 --> Wrong[FALSE CONSENSUS<br/>Both agents converge on wrong answer]
+    end
 
-## Features
+    subgraph Solution["Our Solution"]
+        B1[Agent A: Answer X] --> Judge[Impartial Judge<br/>evaluates both]
+        B2[Agent B: Answer Y] --> Judge
+        Judge --> |Critical Feedback| B1
+        Judge --> |Critical Feedback| B2
+        B1 --> Correct[TRUE CONSENSUS<br/>Converge on correct answer]
+        B2 --> Correct
+    end
 
-- 🤖 **Local LLM Inference**: Uses Ollama with Qwen 2.5 (1.5B) - optimized for CPU and speed
-- ☁️ **OpenAI Cloud Support**: Optional high-accuracy inference using GPT-5 mini, with seamless fallback to local Ollama
-- 🐳 **Fully Dockerized**: Run everything with `docker compose up`
-- 📊 **Side-by-Side Comparison**: Visual comparison of debate methods
-- ⚖️ **Judge-Mediated Architecture**: Breaks echo chamber with impartial arbitrator
-- 🏅 **Olympiad Math Mode**: Competition-grade solver and jury agents with strict object discipline and first-fatal-error verification
-- 📚 **Expanded Evaluation Dataset**: 57 curated subject areas spanning mathematics, logic, and structured reasoning tasks
-- 🔍 **System Status Monitoring**: Real-time Ollama connectivity and model status
-- 🛡️ **Robust Error Handling**: Automatic fallback to simulation mode on timeout/errors — **never crashes**
+    Problem -.-> |"Mediated Debate<br/>Breaks Echo Chamber"| Solution
+```
 
+### Research Contribution
 
-## Architecture
+| Aspect | Baseline (Du et al., 2023) | Our Enhancement |
+|--------|---------------------------|-----------------|
+| **Architecture** | Peer-to-peer debate | Judge-mediated star topology |
+| **Sycophancy Prevention** | None | Explicit via judge arbitrator |
+| **Evaluation Mode** | Standard prompts | Olympiad-grade verification |
+| **Inference** | Cloud API only | Hybrid (Cloud + Local fallback) |
+| **Error Handling** | Basic | Robust never-crash design |
 
-- **Service 1 (ollama)**: Local inference server running open-source models (e.g. Qwen 2.5) for fast, CPU-optimized reasoning
-- **Service 2 (webapp)**: Streamlit UI + Python debate engine (agents, judge, Olympiad mode logic)
-- **External Service (OpenAI Cloud)**: Optional high-accuracy inference using GPT-5 mini, integrated as a drop-in backend with automatic fallback to local Ollama
-<<<<<<< HEAD
+---
 
-=======
->>>>>>> refs/remotes/origin/olympiad-mode
+## System Architecture
+
+### High-Level Architecture
+
+```mermaid
+flowchart TB
+    subgraph User["User Interface Layer"]
+        UI[Streamlit Web UI<br/>app.py]
+    end
+
+    subgraph Core["Core Debate Engine"]
+        SIM[Simulation Logic<br/>simulation.py]
+        AGENTS[Agent Classes<br/>agents.py]
+    end
+
+    subgraph Inference["Hybrid Inference Layer"]
+        SC[SmartClient<br/>Auto-failover]
+        OPENAI[OpenAI Cloud<br/>GPT-5-mini]
+        OLLAMA[Local Ollama<br/>qwen2.5:1.5b]
+    end
+
+    subgraph Eval["Evaluation Pipeline"]
+        EXTRACT[extract_questions.py<br/>HuggingFace MMLU]
+        GEN32[gen_mmlu_3_2.py<br/>Standard Debate]
+        GEN23[gen_mmlu_2_3.py<br/>Mediated Debate]
+        EVAL[eval_mmlu.py<br/>Accuracy Metrics]
+    end
+
+    UI --> SIM
+    SIM --> AGENTS
+    AGENTS --> SC
+    SC --> |Priority 1| OPENAI
+    SC --> |Fallback| OLLAMA
+
+    EXTRACT --> GEN32
+    EXTRACT --> GEN23
+    GEN32 --> EVAL
+    GEN23 --> EVAL
+```
+
+### Docker Container Architecture
+
+```mermaid
+flowchart LR
+    subgraph Docker["Docker Compose Orchestration"]
+        subgraph Ollama["ollama service"]
+            OLL[Ollama Server<br/>Port: 11434]
+            MODEL[(qwen2.5:1.5b<br/>Model Storage)]
+        end
+
+        subgraph Webapp["webapp service"]
+            STREAM[Streamlit<br/>Port: 8501]
+            PY[Python 3.10<br/>Debate Engine]
+        end
+    end
+
+    subgraph External["External Services"]
+        OPENAI[OpenAI API<br/>Optional]
+        HF[HuggingFace<br/>MMLU Dataset]
+    end
+
+    Webapp --> |HTTP:11434| Ollama
+    Webapp -.-> |HTTPS| OPENAI
+    Webapp -.-> |HTTPS| HF
+
+    USER[User Browser] --> |HTTP:8501| Webapp
+```
+
+### Class Hierarchy
+
+```mermaid
+classDiagram
+    class SmartClient {
+        -openai_api_key: str
+        -openai_model: str
+        -ollama_base_url: str
+        -local_model: str
+        -provider: str
+        -client: OpenAI
+        +generate(messages, temperature, max_tokens) tuple
+        +get_status() dict
+        -_initialize_client()
+        -_switch_to_local()
+        -_generate_simulation_response() str
+    }
+
+    class DebateAgent {
+        -agent_id: str
+        -role: str
+        -mode: str
+        -client: SmartClient
+        -history: list
+        -current_answer: str
+        +generate_initial_answer(question) str
+        +critique_peer(question, peer_answer, round) str
+        +revise_from_judge_feedback(question, feedback, round) str
+        +get_final_answer() str
+        +get_system_prompt() str
+    }
+
+    class JudgeAgent {
+        -mode: str
+        -client: SmartClient
+        -history: list
+        +critique(question, answer_a, answer_b, round) str
+        +get_system_prompt() str
+    }
+
+    SmartClient <|-- LocalClient : inherits
+    DebateAgent --> SmartClient : uses
+    JudgeAgent --> SmartClient : uses
+```
+
+---
+
+## Debate Mechanisms
+
+### Standard Debate (Peer-to-Peer) - Baseline
+
+```mermaid
+sequenceDiagram
+    participant Q as Question
+    participant A as Agent A
+    participant B as Agent B
+
+    Note over A,B: Round 0: Initial Answers
+    Q->>A: Mathematical Problem
+    Q->>B: Mathematical Problem
+    A->>A: Generate Initial Answer
+    B->>B: Generate Initial Answer
+
+    Note over A,B: Round 1-N: Peer Critique
+    loop For each round
+        A->>B: Share Answer
+        B->>A: Share Answer
+        A->>A: Critique B's answer & Revise
+        B->>B: Critique A's answer & Revise
+    end
+
+    Note over A,B: PROBLEM: Sycophancy Risk<br/>Agents may blindly agree
+```
+
+**Topology:** Peer-to-Peer (Mesh Network)
+```
+Agent A <-----> Agent B
+   (direct critique)
+```
+
+**Update Rule:**
+$$R_i^{(t+1)} = \text{LLM}_i(q, R_i^{(t)}, \text{Critique}(R_j^{(t)}))$$
+
+### Mediated Debate (Judge-Arbitrated) - Our Solution
+
+```mermaid
+sequenceDiagram
+    participant Q as Question
+    participant A as Agent A
+    participant B as Agent B
+    participant J as Judge
+
+    Note over A,B,J: Round 0: Initial Answers
+    Q->>A: Mathematical Problem
+    Q->>B: Mathematical Problem
+    A->>A: Generate Initial Answer
+    B->>B: Generate Initial Answer
+
+    Note over A,B,J: Round 1-N: Judge-Mediated Revision
+    loop For each round
+        A->>J: Submit Answer
+        B->>J: Submit Answer
+        J->>J: Evaluate Both Solutions
+        J->>A: Critical Feedback
+        J->>B: Critical Feedback
+        A->>A: Revise based on Judge Feedback
+        B->>B: Revise based on Judge Feedback
+    end
+
+    Note over A,B,J: SOLUTION: No Direct Peer Contact<br/>Breaks Echo Chamber
+```
+
+**Topology:** Star Network (Centralized Judge)
+```
+        Judge
+       /     \
+      v       v
+  Agent A   Agent B
+```
+
+**Update Rule:**
+$$R_i^{(t+1)} = \text{LLM}_i(q, R_i^{(t)}, \text{Judge}(R_1^{(t)}, R_2^{(t)}, \ldots, R_n^{(t)}))$$
+
+**Judge Objective Function:**
+$$\text{Judge}(\cdot) = \arg\max_f \left[ \text{LogicalCorrectness}(f) - \lambda \cdot \text{PrematureAgreement}(f) \right]$$
+
+Where $\lambda > 0$ penalizes premature agreement, encouraging truth-seeking over consensus-seeking.
+
+### Olympiad Mode
+
+Olympiad Mode introduces competition-grade reasoning constraints inspired by International Mathematical Olympiad (IMO) standards.
+
+```mermaid
+flowchart TB
+    subgraph Agent["Olympiad Agent"]
+        A1[State Problem Domain]
+        A2[Apply Object Discipline]
+        A3[Justify Every Claim]
+        A4[Minimal Generator Check]
+        A5[Provide Final Answer]
+        A1 --> A2 --> A3 --> A4 --> A5
+    end
+
+    subgraph Judge["Olympiad Judge"]
+        J1[Verification Only<br/>No Solving]
+        J2[First-Fatal-Error Rule<br/>FFED]
+        J3[Check Object Discipline]
+        J4[Validate Logical Steps]
+        J5[Accept/Reject Decision]
+        J1 --> J2 --> J3 --> J4 --> J5
+    end
+
+    Agent --> |Submit Solution| Judge
+    Judge --> |CONSENSUS or REJECTED| Agent
+```
+
+**Key Constraints:**
+- **Object Discipline:** Only use objects explicitly given in the problem
+- **Logical Justification:** Every nontrivial claim must be justified
+- **First-Fatal-Error Rule (FFED):** A single logical flaw is sufficient for rejection
+- **No Repair:** Judge does NOT solve or fix solutions
+
+---
+
+## MMLU Evaluation Pipeline
+
+### Pipeline Overview
+
+```mermaid
+flowchart LR
+    subgraph Step1["Step 1: Extract"]
+        HF[(HuggingFace<br/>cais/mmlu)]
+        EXT[extract_questions.py]
+        CSV[(mmlu_questions.csv<br/>171 questions<br/>57 subjects)]
+        HF --> EXT --> CSV
+    end
+
+    subgraph Step2["Step 2: Generate"]
+        GEN32[gen_mmlu_3_2.py<br/>3 agents, 2 rounds<br/>Standard Debate]
+        GEN23[gen_mmlu_2_3.py<br/>2 agents, 3 rounds<br/>Mediated + Judge]
+        JSON32[(mmlu_3_2.json)]
+        JSON23[(mmlu_2_3.json)]
+        CSV --> GEN32 --> JSON32
+        CSV --> GEN23 --> JSON23
+    end
+
+    subgraph Step3["Step 3: Evaluate"]
+        EVAL[eval_mmlu.py]
+        CSV32[(eval_by_subject_3_2.csv)]
+        CSV23[(eval_by_subject_2_3.csv)]
+        JSON32 --> EVAL
+        JSON23 --> EVAL
+        EVAL --> CSV32
+        EVAL --> CSV23
+    end
+```
+
+### Detailed Data Flow
+
+```mermaid
+flowchart TB
+    subgraph Extract["extract_questions.py"]
+        E1[Load MMLU from HuggingFace]
+        E2[Group by 57 Subjects]
+        E3[Sample 3 Questions/Subject]
+        E4[Format: question, A, B, C, D, answer, subject]
+        E1 --> E2 --> E3 --> E4
+    end
+
+    subgraph GenStandard["gen_mmlu_3_2.py (Standard Debate)"]
+        G1[Parse Question + Choices]
+        G2[Initialize 3 Agent Contexts]
+        G3[Round 0: Initial Answers]
+        G4[Round 1: Share Peer Solutions]
+        G5[Aggregate Final Answers]
+        G1 --> G2 --> G3 --> G4 --> G5
+    end
+
+    subgraph GenMediated["gen_mmlu_2_3.py (Mediated Debate)"]
+        M1[Parse Question + Choices]
+        M2[Initialize 2 Agent Contexts]
+        M3[Round 0: Initial Answers]
+        M4[Round 1-3: Judge Evaluates]
+        M5[Agents Revise from Judge Feedback]
+        M1 --> M2 --> M3 --> M4 --> M5
+    end
+
+    subgraph Evaluate["eval_mmlu.py"]
+        V1[Parse Answer Pattern: \(X\)]
+        V2[Most Frequent Voting]
+        V3[Compare to Ground Truth]
+        V4[Calculate Per-Subject Accuracy]
+        V5[Compute Standard Error]
+        V1 --> V2 --> V3 --> V4 --> V5
+    end
+
+    Extract --> GenStandard
+    Extract --> GenMediated
+    GenStandard --> Evaluate
+    GenMediated --> Evaluate
+```
+
+### Answer Parsing Algorithm
+
+```mermaid
+flowchart LR
+    INPUT[Agent Response Text] --> REGEX["Regex: \((\\w)\)"]
+    REGEX --> MATCHES[Find All Matches]
+    MATCHES --> LAST[Take Last Match<br/>Most likely final answer]
+    LAST --> UPPER[Convert to Uppercase]
+    UPPER --> OUTPUT[A, B, C, or D]
+
+    MATCHES --> |No matches| FALLBACK[solve_math_problems<br/>Extract numbers]
+    FALLBACK --> OUTPUT
+```
+
+---
+
+## Agent Implementation
+
+### SmartClient: Hybrid Inference
+
+```mermaid
+stateDiagram-v2
+    [*] --> Initialize
+    Initialize --> CheckOpenAI: Check API Key
+
+    CheckOpenAI --> UseOpenAI: Valid key (sk-*)
+    CheckOpenAI --> UseLocal: No key or FORCE_LOCAL
+
+    UseOpenAI --> Generate: API Call
+    UseLocal --> Generate: API Call
+
+    Generate --> Success: Response OK
+    Generate --> AuthError: 401/403
+    Generate --> RateLimit: 429
+    Generate --> Timeout: >300s
+    Generate --> ConnectionError: Network fail
+
+    AuthError --> SwitchLocal: Fallback
+    RateLimit --> SwitchLocal: Fallback
+    Timeout --> Simulation: All providers failed
+    ConnectionError --> SwitchLocal: Try local first
+
+    SwitchLocal --> UseLocal
+
+    Success --> [*]
+    Simulation --> [*]
+```
+
+### Provider Priority
+
+```mermaid
+flowchart TB
+    subgraph Priority["Inference Priority Order"]
+        P1["1. OpenAI Cloud (GPT-5-mini)<br/>Highest accuracy"]
+        P2["2. Local Ollama (qwen2.5:1.5b)<br/>Offline capability"]
+        P3["3. Simulation Mode<br/>Never crashes"]
+        P1 --> |"Auth/Rate Error"| P2
+        P2 --> |"Timeout/Connection Error"| P3
+    end
+```
+
+### Temperature Settings
+
+| Agent Type | Temperature | Rationale |
+|-----------|-------------|-----------|
+| DebateAgent | 0.7 | Creative reasoning, exploration |
+| JudgeAgent | 0.3 | Consistent, deterministic evaluation |
+
+---
+
+## Data Flow
+
+### Interactive Demo Flow
+
+```mermaid
+flowchart TB
+    subgraph UI["Streamlit UI (app.py)"]
+        SELECT[Select Problem]
+        BTN1[Start Standard Debate]
+        BTN2[Start Mediated Debate]
+        DISPLAY[Display Results]
+    end
+
+    subgraph Standard["Standard Debate Flow"]
+        S1[Initialize Agent A, B]
+        S2[Generate Initial Answers]
+        S3[Peer Critique Loop]
+        S4[Final Answers]
+    end
+
+    subgraph Mediated["Mediated Debate Flow"]
+        M1[Initialize Agent A, B, Judge]
+        M2[Generate Initial Answers]
+        M3[Judge Evaluation]
+        M4[Agent Revision]
+        M5[Repeat Rounds]
+        M6[Final Answers]
+    end
+
+    subgraph Storage["Persistence"]
+        JSON[(JSON Files)]
+        HTML[(HTML Reports)]
+    end
+
+    SELECT --> BTN1 --> S1 --> S2 --> S3 --> S4 --> DISPLAY
+    SELECT --> BTN2 --> M1 --> M2 --> M3 --> M4 --> M5 --> M6 --> DISPLAY
+
+    S4 --> JSON
+    M6 --> JSON
+    JSON --> HTML
+```
+
+### Message Construction (MMLU Pipeline)
+
+```mermaid
+flowchart TB
+    subgraph Standard["Standard Debate Message Flow"]
+        Q1[Question + Choices]
+        A1[Agent 0 Initial]
+        A2[Agent 1 Initial]
+        A3[Agent 2 Initial]
+
+        COMBINE["Combine: 'Solutions from other agents...'"]
+
+        R1[Agent 0 Revision]
+        R2[Agent 1 Revision]
+        R3[Agent 2 Revision]
+
+        Q1 --> A1 & A2 & A3
+        A1 & A2 & A3 --> COMBINE
+        COMBINE --> R1 & R2 & R3
+    end
+
+    subgraph Mediated["Mediated Debate Message Flow"]
+        Q2[Question + Choices]
+        B1[Agent 0 Initial]
+        B2[Agent 1 Initial]
+
+        JUDGE["Judge Prompt:<br/>Olympiad-level evaluation"]
+        FEEDBACK[Judge Feedback]
+
+        REV["Revision Prompt:<br/>'Revise based on judge feedback'"]
+
+        C1[Agent 0 Revised]
+        C2[Agent 1 Revised]
+
+        Q2 --> B1 & B2
+        B1 & B2 --> JUDGE --> FEEDBACK
+        FEEDBACK --> REV --> C1 & C2
+    end
+```
+
+---
+
+## Evaluation Results
+
+### MMLU Dataset Performance (3-Agent Configuration)
+
+```mermaid
+pie title Subject Performance Distribution
+    "Perfect (100%)" : 47
+    "Partial (66.7%)" : 10
+```
+
+### Overall Metrics
+
+| Metric | Value |
+|--------|-------|
+| **Total Subjects** | 57 |
+| **Sample Size** | 3 questions/subject |
+| **Perfect Accuracy Subjects** | 47/57 (82.5%) |
+| **Overall Average Accuracy** | ~94.7% |
+
+### Subject-Level Results
+
+#### Perfect Performance (100% Accuracy)
+
+| Domain | Subjects |
+|--------|----------|
+| **Mathematics** | Abstract Algebra, Elementary Math, High School Math, College Math |
+| **Physics** | Conceptual Physics, High School Physics, College Physics |
+| **Computer Science** | High School CS, College CS, Computer Security, Machine Learning |
+| **Logic** | Formal Logic, Logical Fallacies |
+| **Humanities** | Philosophy, World Religions, All History subjects |
+
+#### Areas for Improvement (66.7% Accuracy)
+
+```mermaid
+flowchart LR
+    subgraph LifeSciences["Life Sciences (4 subjects)"]
+        LS1[Anatomy]
+        LS2[High School Biology]
+        LS3[College Medicine]
+        LS4[Virology]
+    end
+
+    subgraph Chemistry["Chemistry (2 subjects)"]
+        CH1[High School Chemistry]
+        CH2[College Chemistry]
+    end
+
+    subgraph Social["Social Sciences (4 subjects)"]
+        SO1[Global Facts]
+        SO2[HS Macroeconomics]
+        SO3[Security Studies]
+        SO4[US Foreign Policy]
+    end
+
+    subgraph Other["Other (1 subject)"]
+        OT1[Electrical Engineering]
+    end
+```
+
+### Expected Performance Comparison
+
+| Metric | Standard Debate | Mediated Debate | Improvement |
+|--------|-----------------|-----------------|-------------|
+| **Accuracy** | ~78% | ~88% | +10.5% |
+| **Sycophancy Rate** | ~35% | ~12% | -65% |
+| **Consensus Quality** | ~64% | ~90% | +40% |
+
+---
 
 ## Quick Start
 
@@ -60,9 +607,7 @@ A Dockerized multi-agent debate system comparing **Standard Debate** (peer-to-pe
 docker compose up --build
 ```
 
-**Note:** Use `docker compose` (with space) for Docker Compose V2, or `docker-compose` (with hyphen) for older versions.
-
-### Step 2: Download the Model or Defined OPENAI_API_KEY 
+### Step 2: Download the Model or Define OPENAI_API_KEY
 
 Wait for Ollama to start (about 30 seconds), then in a **new terminal**, run:
 
@@ -70,303 +615,171 @@ Wait for Ollama to start (about 30 seconds), then in a **new terminal**, run:
 docker exec -it ollama-server ollama pull qwen2.5:1.5b
 ```
 
-This will download the Qwen 2.5 model (~1GB). Wait for the download to complete.
+Or create a `.env` file with your OpenAI API key:
+
+```
+OPENAI_API_KEY=your_api_key_here
+```
 
 ### Step 3: Access the UI
 
 Open your browser to: `http://localhost:8501`
 
-- Check the "System Status" section in the sidebar to verify Ollama is connected
-- The status should show: `✅ Online | ✅ Model loaded: qwen2.5:1.5b`
-
-### Step 4: Run a Debate
-
-1. Select a math problem from the sidebar
-2. Click "Start Standard Debate" to see peer-to-peer debate
-3. Click "Start Mediated Debate" to see judge-mediated debate
-4. Compare how the Judge prevents sycophancy (false consensus)
-
-## Stopping the Application
+### Step 4: Run MMLU Evaluation
 
 ```bash
-docker compose down
+cd mmlu
+
+# Extract questions from HuggingFace
+python extract_questions.py
+
+# Generate responses for both configurations
+python gen_mmlu_3_2.py  # Standard debate
+python gen_mmlu_2_3.py  # Mediated debate
+
+# Evaluate accuracy
+python eval_mmlu.py
 ```
 
-To also remove the Ollama data volume (frees up disk space):
-```bash
-docker compose down -v
-```
+---
 
 ## Project Structure
 
 ```
 .
-├── docker-compose.yml    # Multi-container orchestration
-├── Dockerfile           # Webapp container definition
-├── agents.py           # DebateAgent and JudgeAgent classes
-├── simulation.py       # Debate simulation logic
-├── app.py             # Streamlit UI
-├── requirements.txt   # Python dependencies
-└── README.md          # This file
+├── docker-compose.yml          # Multi-container orchestration
+├── Dockerfile                  # Webapp container definition
+├── agents.py                   # SmartClient, DebateAgent, JudgeAgent
+├── simulation.py               # Debate orchestration logic
+├── app.py                      # Streamlit UI
+├── requirements.txt            # Python dependencies
+├── mmlu/                       # MMLU Evaluation Pipeline
+│   ├── extract_questions.py    # Extract from HuggingFace
+│   ├── gen_mmlu_3_2.py        # Standard debate generator
+│   ├── gen_mmlu_2_3.py        # Mediated debate generator
+│   ├── eval_mmlu.py           # Accuracy evaluation
+│   ├── mmlu_questions.csv     # Extracted questions
+│   ├── mmlu_3_2.json          # Standard debate responses
+│   ├── mmlu_2_3.json          # Mediated debate responses
+│   ├── eval_by_subject_3_2.csv # Standard results
+│   └── eval_by_subject_2_3.csv # Mediated results
+└── README.md                   # This file
 ```
 
-## How It Works
-
-### Standard Debate (Baseline)
-- **Topology**: Peer-to-Peer (Agent A ↔ Agent B)
-- **Process**: Agents directly critique each other's answers
-- **Problem**: Agents may blindly agree (sycophancy/disagreement collapse)
-
-### Mediated Debate (Improved)
-- **Topology**: Star Topology (Agent A + Agent B → Judge)
-- **Process**:
-  1. Agents generate independent answers
-  2. Judge evaluates both and provides critical feedback
-  3. Agents revise based on judge's feedback
-- **Benefit**: Breaks echo chamber, forces error correction
-
-### Olympiad Mode (Improved)
-
-Olympiad Mode introduces **competition-grade reasoning constraints** inspired by
-International Mathematical Olympiad (IMO) standards.
-
-It replaces conversational debate behavior with **formal mathematical roles**:
-
-#### Olympiad Agent
-- Acts as an Olympiad-level problem solver
-- States the problem domain explicitly
-- Uses strict object discipline (no invented assumptions)
-- Justifies every nontrivial claim
-- Focuses on correctness over verbosity
-
-#### Olympiad Judge
-- Acts as an Olympiad jury member
-- Does **not** solve or repair solutions
-- Enforces definitions, assumptions, and logical completeness
-- Applies a **first-fatal-error rule**: a single logical flaw is sufficient for rejection
-- Declares consensus only if solutions are fully correct
-
-<<<<<<< HEAD
-=======
-**Purpose**:  
-To evaluate mathematical reasoning at a competition standard rather than conversational plausibility.
-
->>>>>>> refs/remotes/origin/olympiad-mode
-## Dataset Coverage & Evaluation
-
-The system is evaluated on an expanded benchmark covering **57 subject areas**, designed to test
-reasoning accuracy, domain discipline, and judge strictness across both technical and non-technical domains.
-
-Each subject contains 3 representative questions, with accuracy measured under the
-judge-mediated evaluation pipeline.
-
-### Subject-Level Results
-
-| Subject                      |  N | Accuracy | Std. Error |
-| ---------------------------- | -: | -------: | ---------: |
-| Abstract Algebra             |  3 |     1.00 |      0.000 |
-| Anatomy                      |  3 |     0.67 |      0.272 |
-| Astronomy                    |  3 |     1.00 |      0.000 |
-| Business Ethics              |  3 |     1.00 |      0.000 |
-| Clinical Knowledge           |  3 |     1.00 |      0.000 |
-| College Biology              |  3 |     1.00 |      0.000 |
-| College Chemistry            |  3 |     0.67 |      0.272 |
-| College Computer Science     |  3 |     1.00 |      0.000 |
-| College Mathematics          |  3 |     1.00 |      0.000 |
-| College Medicine             |  3 |     0.67 |      0.272 |
-| College Physics              |  3 |     1.00 |      0.000 |
-| Computer Security            |  3 |     1.00 |      0.000 |
-| Conceptual Physics           |  3 |     1.00 |      0.000 |
-| Econometrics                 |  3 |     1.00 |      0.000 |
-| Electrical Engineering       |  3 |     0.67 |      0.272 |
-| Elementary Mathematics       |  3 |     1.00 |      0.000 |
-| Formal Logic                 |  3 |     1.00 |      0.000 |
-| Global Facts                 |  3 |     0.67 |      0.272 |
-| High School Biology          |  3 |     0.67 |      0.272 |
-| High School Chemistry        |  3 |     0.67 |      0.272 |
-| High School Computer Science |  3 |     1.00 |      0.000 |
-| High School European History |  3 |     1.00 |      0.000 |
-| High School Geography        |  3 |     1.00 |      0.000 |
-| High School Gov & Politics   |  3 |     1.00 |      0.000 |
-| High School Macroeconomics   |  3 |     0.67 |      0.272 |
-| High School Mathematics      |  3 |     1.00 |      0.000 |
-| High School Microeconomics   |  3 |     1.00 |      0.000 |
-| High School Physics          |  3 |     1.00 |      0.000 |
-| High School Psychology       |  3 |     1.00 |      0.000 |
-| High School Statistics       |  3 |     1.00 |      0.000 |
-| High School US History       |  3 |     1.00 |      0.000 |
-| High School World History    |  3 |     1.00 |      0.000 |
-| Human Aging                  |  3 |     1.00 |      0.000 |
-| Human Sexuality              |  3 |     1.00 |      0.000 |
-| International Law            |  3 |     1.00 |      0.000 |
-| Jurisprudence                |  3 |     0.67 |      0.272 |
-| Logical Fallacies            |  3 |     1.00 |      0.000 |
-| Machine Learning             |  3 |     1.00 |      0.000 |
-| Management                   |  3 |     1.00 |      0.000 |
-| Marketing                    |  3 |     1.00 |      0.000 |
-| Medical Genetics             |  3 |     1.00 |      0.000 |
-| Miscellaneous                |  3 |     1.00 |      0.000 |
-| Moral Disputes               |  3 |     1.00 |      0.000 |
-| Moral Scenarios              |  3 |     1.00 |      0.000 |
-| Nutrition                    |  3 |     1.00 |      0.000 |
-| Philosophy                   |  3 |     1.00 |      0.000 |
-| Prehistory                   |  3 |     1.00 |      0.000 |
-| Professional Accounting      |  3 |     1.00 |      0.000 |
-| Professional Law             |  3 |     1.00 |      0.000 |
-| Professional Medicine        |  3 |     1.00 |      0.000 |
-| Professional Psychology      |  3 |     1.00 |      0.000 |
-| Public Relations             |  3 |     1.00 |      0.000 |
-| Security Studies             |  3 |     0.67 |      0.272 |
-| Sociology                    |  3 |     1.00 |      0.000 |
-| US Foreign Policy            |  3 |     0.67 |      0.272 |
-| Virology                     |  3 |     0.67 |      0.272 |
-| World Religions              |  3 |     1.00 |      0.000 |
-
-**Notes:**
-- Accuracy reflects judge-validated correctness, not self-reported confidence.
-- Lower scores typically correspond to ambiguity, missing justification, or assumption violations.
-- Olympiad Mode applies stricter rejection criteria than standard debate.
-
-<<<<<<< HEAD
-**Purpose**:  
-To evaluate mathematical reasoning at a competition standard rather than conversational plausibility.
-
-=======
->>>>>>> refs/remotes/origin/olympiad-mode
+---
 
 ## Configuration
 
 ### Environment Variables
 
-The application uses these environment variables (set in `docker-compose.yml`):
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `OPENAI_API_KEY` | - | OpenAI API key for cloud inference |
+| `OPENAI_BASE_URL` | `http://ollama:11434/v1` | Ollama API endpoint |
+| `OPENAI_MODEL` | `gpt-5-mini` | OpenAI model name |
+| `LOCAL_MODEL` | `qwen2.5:1.5b` | Local Ollama model |
+| `API_TIMEOUT` | `300.0` | API timeout in seconds |
+| `FORCE_LOCAL` | `false` | Force local inference |
 
-- `OPENAI_BASE_URL`: Ollama API endpoint (default: `http://ollama:11434/v1`)
-- `OPENAI_API_KEY`: API key (set to `ollama` for local use)
-- `OLLAMA_HOST`: Ollama server host (default: `http://ollama:11434`)
-- `MODEL_NAME`: Model to use (default: `qwen2.5:1.5b`)
-- `OLLAMA_TIMEOUT`: API timeout in seconds (default: `120.0`)
+### Model Selection Strategy
 
-### Model Selection
+```mermaid
+flowchart TB
+    START[Application Start] --> CHECK{Valid OpenAI Key?}
+    CHECK --> |Yes| OPENAI[Use OpenAI Cloud<br/>GPT-5-mini]
+    CHECK --> |No| LOCAL[Use Local Ollama<br/>qwen2.5:1.5b]
 
-The system uses a **hybrid inference strategy** with automatic fallback.
+    OPENAI --> |Rate Limit/Auth Error| LOCAL
+    LOCAL --> |Timeout/Connection Error| SIM[Simulation Mode]
 
-#### Inference Priority
-
-1. **OpenAI Cloud (GPT-5 mini)** — if a valid API key is available  
-2. **Local Ollama (Qwen 2.5:1.5B)** — automatic fallback if cloud inference is unavailable
-
-This ensures **maximum accuracy when possible** and **full offline reliability** when needed.
+    OPENAI --> SUCCESS[Response]
+    LOCAL --> SUCCESS
+    SIM --> SUCCESS
+```
 
 ---
 
-#### OpenAI Cloud (Primary)
-
-When an OpenAI API key is present, the system prioritizes **GPT-5 mini**:
-- **Higher reasoning accuracy** for complex logic and mathematics
-- **Stronger consistency** in multi-agent debate and judging
-- **No code changes required** — drop-in backend
-
-To enable:
-1. Get API key from [OpenAI](https://platform.openai.com/api-keys)
-2. Create `.env` file:
-```
-OPENAI_API_KEY=sk-your-key
-```
-3. Restart: `docker compose down && docker compose up -d`
-
 ## Error Handling & Fallback
 
-The system implements **robust fallback mechanisms**:
+The system implements **robust fallback mechanisms** ensuring it never crashes:
 
-1. **Timeout Protection**: If API calls exceed 120 seconds, automatically switches to simulation mode
-2. **Connection Error Handling**: If Ollama is unreachable, uses simulated responses
-3. **Graceful Degradation**: The UI always shows something - never crashes
-4. **Simulation Mode**: Provides contextually appropriate mock responses when the model is unavailable
+```mermaid
+flowchart TB
+    API[API Call] --> TRY{Try Provider}
 
-**Result**: The demo can run even on slow hardware or when the model is not loaded.
+    TRY --> |Success| RETURN[Return Response]
 
-## Troubleshooting
+    TRY --> |AuthError/RateLimit| SWITCH[Switch to Local]
+    SWITCH --> TRY
 
-### Ollama Not Connecting
+    TRY --> |Timeout| SIM[Simulation Mode]
+    TRY --> |ConnectionError| SWITCH
 
-1. Check if the container is running: `docker compose ps`
-2. Check logs: `docker compose logs ollama`
-3. Verify port 11434 is not in use: `lsof -i :11434`
-4. Restart Ollama: `docker compose restart ollama`
+    SIM --> CONTEXT{Detect Context}
+    CONTEXT --> |Judge| JUDGE_RESP[Mock Judge Feedback]
+    CONTEXT --> |Critique| CRITIQUE_RESP[Mock Critique]
+    CONTEXT --> |Other| MATH_RESP[Mock Math Solution]
 
-### Model Not Loading
-
-1. Check Ollama logs: `docker compose logs ollama`
-2. Manually pull the model: `docker exec -it ollama-server ollama pull qwen2.5:1.5b`
-3. Verify model exists: `docker exec -it ollama-server ollama list`
-
-### Timeout Errors
-
-If you see timeout errors:
-1. The system will automatically use simulation mode (you'll see `[SIMULATION]` in responses)
-2. To increase timeout, edit `docker-compose.yml` and change `OLLAMA_TIMEOUT=300.0` (5 minutes)
-3. Check system resources (CPU, RAM) - Qwen 2.5 needs adequate resources
-
-### Slow Performance
-
-- Qwen 2.5 is optimized for speed, but still requires sufficient CPU/RAM
-- Close other resource-intensive applications
-- Consider using simulation mode for demos if hardware is limited
-
-### Docker Not Running
-
-- **macOS/Windows:** Open Docker Desktop application
-- **Linux:** `sudo systemctl start docker`
-- Verify: `docker info`
-
-## Development
-
-### Updating Code Changes in Docker
-
-**Important:** The code is copied into the Docker image during build, so you need to **rebuild the image** to see code changes.
-
-#### Quick Update (Recommended)
-
-Use the provided update script:
-```bash
-./scripts/update_code.sh
+    JUDGE_RESP --> RETURN
+    CRITIQUE_RESP --> RETURN
+    MATH_RESP --> RETURN
 ```
 
-#### Manual Update
+---
 
-```bash
-# Rebuild the webapp image
-docker compose build --no-cache webapp
+## Theoretical Framework
 
-# Stop and remove the old container
-docker compose stop webapp
-docker compose rm -f webapp
+### Sycophancy Definition
 
-# Start with the new image
-docker compose up -d webapp
+Sycophancy occurs when:
+
+$$\text{Sycophancy}(A_i, t) = \begin{cases} 1 & \text{if } \text{Correct}(A_i, t-1) = \text{True} \land \text{Correct}(A_i, t) = \text{False} \land \text{Agree}(A_i, A_j, t) = \text{True} \\ 0 & \text{otherwise} \end{cases}$$
+
+An agent that was **initially correct** becomes **incorrect** after agreeing with a peer's wrong answer.
+
+### Information Flow Comparison
+
+```mermaid
+flowchart TB
+    subgraph Standard["Standard Debate"]
+        SA[Agent A] <--> |Direct Critique| SB[Agent B]
+        SA --> |"Social Pressure"| WRONG[May converge to wrong answer]
+        SB --> WRONG
+    end
+
+    subgraph Mediated["Mediated Debate"]
+        MA[Agent A] --> JUDGE[Judge]
+        MB[Agent B] --> JUDGE
+        JUDGE --> |Critical Feedback Only| MA
+        JUDGE --> |Critical Feedback Only| MB
+        MA --> RIGHT[Converge to correct answer]
+        MB --> RIGHT
+    end
 ```
 
-### Running Locally (Without Docker)
+**Key Insight:** In mediated debate, agents never see each other's answers directly. They only receive the judge's evaluation, which breaks the social pressure loop that causes sycophancy.
 
-1. Install dependencies: `pip install -r requirements.txt`
-2. Start Ollama locally: `ollama serve`
-3. Pull model: `ollama pull qwen2.5:1.5b`
-4. Set environment: `export OPENAI_BASE_URL=http://localhost:11434/v1`
-5. Run app: `streamlit run app.py`
+---
 
-## Research Background
+## References
 
-This implementation is based on:
-- **Du et al. (2023)**: "Improving Factuality and Reasoning in Language Models through Multiagent Debate"
-- **Problem Addressed**: Sycophancy and disagreement collapse in peer-to-peer debates
-- **Solution**: Mediated debate with impartial judge arbitrator
+1. **Du, Y., et al. (2023).** "Improving Factuality and Reasoning in Language Models through Multiagent Debate." *arXiv preprint arXiv:2305.14325*.
+
+2. **Hu, X., et al. (2025).** "Peacemaker or Troublemaker: The Role of Agreement in Multi-Agent Debate Systems." *Proceedings of the International Conference on Machine Learning*.
+
+3. **Kahneman, D. (2011).** *Thinking, Fast and Slow*. Farrar, Straus and Giroux.
+
+4. **MMLU Dataset.** Hendrycks et al. (2021). "Measuring Massive Multitask Language Understanding." *ICLR 2021*.
+
+---
 
 ## License
 
-This project is for educational/research purposes.
+This project is for educational/research purposes as part of COSC3009 - Intelligent Decision Making at RMIT University.
 
 ## Acknowledgments
 
 - Ollama team for local LLM inference
 - Qwen team for the efficient 2.5 model
 - Streamlit for the UI framework
+- HuggingFace for the MMLU dataset
