@@ -115,60 +115,69 @@ def most_frequent(List):
 
 
 if __name__ == "__main__":
-    response_dict = json.load(open("mmlu_3_2.json", "r"))
-    questions = list(response_dict.keys())
+    # Process both files
+    file_pairs = [
+        ("mmlu_3_2.json", "eval_by_subject_3_2.csv"),
+        ("mmlu_2_3.json", "eval_by_subject_2_3.csv"),
+    ]
 
-    accuracies = []
-    accuracies_by_subject: dict[str, list[float]] = {}
+    for input_file, output_file in file_pairs:
+        print(f"\nProcessing {input_file}...")
+        
+        response_dict = json.load(open(input_file, "r"))
+        questions = list(response_dict.keys())
 
-    for question in questions:
-        responses, gt, subject = response_dict[question]
+        accuracies = []
+        accuracies_by_subject: dict[str, list[float]] = {}
 
-        pred_solutions = []
-        for response in responses:
-            pred_solution = response[-1]["content"]
+        for question in questions:
+            responses, gt, subject = response_dict[question]
 
-            pred_solutions.append(pred_solution)
-            # break
+            pred_solutions = []
+            for response in responses:
+                pred_solution = response[-1]["content"]
 
-        # pred_solutions = pred_solutions[:1]
+                pred_solutions.append(pred_solution)
+                # break
 
-        accurate = compute_accuracy(gt, pred_solutions)
+            # pred_solutions = pred_solutions[:1]
 
-        if accurate is not None:
-            accuracies.append(float(accurate))
-            accuracies_by_subject.setdefault(str(subject), []).append(float(accurate))
-        else:
-            import pdb
+            accurate = compute_accuracy(gt, pred_solutions)
 
-            pdb.set_trace()
-            print(gt)
+            if accurate is not None:
+                accuracies.append(float(accurate))
+                accuracies_by_subject.setdefault(str(subject), []).append(float(accurate))
+            else:
+                import pdb
 
-        print(
-            "accuracies:",
-            np.mean(accuracies),
-            np.std(accuracies) / (len(accuracies) ** 0.5),
+                pdb.set_trace()
+                print(gt)
+
+            print(
+                "accuracies:",
+                np.mean(accuracies),
+                np.std(accuracies) / (len(accuracies) ** 0.5),
+            )
+
+        # Write per-subject accuracy report
+        report_rows: list[dict[str, object]] = []
+        for subject, subject_accuracies in accuracies_by_subject.items():
+            n = len(subject_accuracies)
+            mean_acc = float(np.mean(subject_accuracies)) if subject_accuracies else 0.0
+            sem = float(np.std(subject_accuracies) / (n**0.5)) if n > 0 else 0.0
+            report_rows.append(
+                {
+                    "subject": subject,
+                    "n": n,
+                    "accuracy": mean_acc,
+                    "std_error": sem,
+                }
+            )
+
+        report_path = Path(output_file)
+        report_dataframe = pd.DataFrame(
+            report_rows, columns=["subject", "n", "accuracy", "std_error"]
         )
+        report_dataframe.to_csv(report_path, index=False, encoding="utf-8")
 
-    # Write per-subject accuracy report
-    report_rows: list[dict[str, object]] = []
-    for subject, subject_accuracies in accuracies_by_subject.items():
-        n = len(subject_accuracies)
-        mean_acc = float(np.mean(subject_accuracies)) if subject_accuracies else 0.0
-        sem = float(np.std(subject_accuracies) / (n**0.5)) if n > 0 else 0.0
-        report_rows.append(
-            {
-                "subject": subject,
-                "n": n,
-                "accuracy": mean_acc,
-                "std_error": sem,
-            }
-        )
-
-    report_path = Path("eval_by_subject.csv")
-    report_dataframe = pd.DataFrame(
-        report_rows, columns=["subject", "n", "accuracy", "std_error"]
-    )
-    report_dataframe.to_csv(report_path, index=False, encoding="utf-8")
-
-    print(f"Wrote {report_path} (subjects={len(report_rows)})")
+        print(f"Wrote {report_path} (subjects={len(report_rows)})")
