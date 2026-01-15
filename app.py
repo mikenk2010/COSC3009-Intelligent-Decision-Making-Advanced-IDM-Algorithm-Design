@@ -816,6 +816,12 @@ def main():
             help="Use hardcoded responses if local model fails"
         )
         
+        olympiad_mode = st.checkbox(
+            "Use Olympiad Mode (for Math problems)",
+            value=False,
+            help="Agent experts for math"
+        )
+
         st.markdown("---")
     
     # Main content area with tabs
@@ -885,8 +891,15 @@ def main():
                             progress_text.write("📝 Initializing agents...")
                             
                             from agents import DebateAgent
-                            agent_a = DebateAgent("Agent A", "Math Expert", mock_mode=False)
-                            agent_b = DebateAgent("Agent B", "Math Expert", mock_mode=False)
+
+                            if olympiad_mode:
+                                agent_a = DebateAgent("Agent A", "Math Expert", "olympiad" , mock_mode=False)
+                                agent_b = DebateAgent("Agent B", "Math Expert", "olympiad" , mock_mode=False)
+                                progress_text.write("✅ Olympiad mode is on!")
+                            
+                            else:
+                                agent_a = DebateAgent("Agent A", "Math Expert", mock_mode=False)
+                                agent_b = DebateAgent("Agent B", "Math Expert", mock_mode=False)
                             
                             progress_bar.progress(0.15)
                             progress_text.write("✅ Agents initialized")
@@ -1152,9 +1165,16 @@ def main():
                             progress_text.write("📝 Initializing agents and judge...")
                             st.session_state.progress_detail = "Step 1/5: Initializing Agent A, Agent B, and Judge..."
                             from agents import DebateAgent, JudgeAgent
-                            agent_a = DebateAgent("Agent A", "Math Expert", mock_mode=False)
-                            agent_b = DebateAgent("Agent B", "Math Expert", mock_mode=False)
-                            judge = JudgeAgent(mock_mode=False)
+                            if olympiad_mode:
+                                agent_a = DebateAgent("Agent A", "Math Expert", "olympiad" , mock_mode=False)
+                                agent_b = DebateAgent("Agent B", "Math Expert", "olympiad" , mock_mode=False)
+                                judge = JudgeAgent("olympiad", mock_mode=False)
+                                progress_text.write("✅ Olympiad mode is on!")
+                            
+                            else:
+                                agent_a = DebateAgent("Agent A", "Math Expert", mock_mode=False)
+                                agent_b = DebateAgent("Agent B", "Math Expert", mock_mode=False)
+                                judge = JudgeAgent(mock_mode=False)
                             
                             progress_bar.progress(0.15)
                             st.session_state.progress_percent = 15

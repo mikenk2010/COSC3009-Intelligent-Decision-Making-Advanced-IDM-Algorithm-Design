@@ -1,0 +1,33 @@
+{
+  "question": "A coffee shop sells coffee for $2.50 per cup and tea for $1.75 per cup. If a customer buys 4 cups of coffee and 3 cups of tea, how much does the customer pay in total?",
+  "method": "mock",
+  "rounds": 3,
+  "log": [
+    {
+      "round": 0,
+      "type": "initial",
+      "agent_a": "[Mock] Agent A: After analyzing the problem, I believe the answer is 42.",
+      "agent_b": "[Mock] Agent B: I've calculated and my answer is 42 as well."
+    },
+    {
+      "round": 0,
+      "type": "initial",
+      "agent_a": "[Mock] Agent A: After analyzing the problem, I believe the answer is 42.",
+      "agent_b": "[Mock] Agent B: I've calculated and my answer is 42 as well."
+    },
+    {
+      "round": 0,
+      "type": "initial",
+      "agent_a": "[Mock] Agent A: After analyzing the problem, I believe the answer is 42.",
+      "agent_b": "[Mock] Agent B: I've calculated and my answer is 42 as well."
+    },
+    {
+      "round": 0,
+      "type": "initial",
+      "agent_a": "[Mock] Agent A: After analyzing the problem, I believe the answer is 42.",
+      "agent_b": "[Mock] Agent B: I've calculated and my answer is 42 as well."
+    }
+  ],
+  "final_agent_a": "[Mock] Agent A final answer: 42",
+  "final_agent_b": "[Mock] Agent B final answer: 42"
+}
