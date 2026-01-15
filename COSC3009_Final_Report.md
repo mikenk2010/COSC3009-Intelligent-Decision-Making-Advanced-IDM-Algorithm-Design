@@ -305,13 +305,13 @@ sequenceDiagram
     participant B as Agent B
     participant J as Judge
 
-    Note over A,B,J: Round 0: Independent Initial Answers
+    Note over A,J: Round 0 - Independent Initial Answers
     Q->>A: Mathematical Problem
     Q->>B: Mathematical Problem
     A->>A: Generate Initial Answer
     B->>B: Generate Initial Answer
 
-    Note over A,B,J: Rounds 1-N: Judge-Mediated Revision
+    Note over A,J: Rounds 1-N - Judge-Mediated Revision
     loop For each round
         A->>J: Submit Answer
         B->>J: Submit Answer
@@ -322,7 +322,7 @@ sequenceDiagram
         B->>B: Revise based on Judge Feedback
     end
 
-    Note over A,B,J: SOLUTION: No Direct Peer Contact<br/>Echo Chamber Broken
+    Note over A,J: SOLUTION - No Direct Peer Contact - Echo Chamber Broken
 ```
 
 **Key Differences from Standard Debate:**
