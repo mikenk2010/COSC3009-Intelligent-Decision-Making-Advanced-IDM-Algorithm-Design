@@ -22,19 +22,21 @@
 
 1. [Executive Summary](#1-executive-summary)
 2. [Problem Statement](#2-problem-statement)
-3. [Original Architecture Analysis](#3-original-architecture-analysis)
-4. [The Sycophancy Problem](#4-the-sycophancy-problem)
-5. [Our Solution: Judge-Mediated Debate](#5-our-solution-judge-mediated-debate)
-6. [Architecture Comparison](#6-architecture-comparison)
-7. [Technical Implementation](#7-technical-implementation)
-8. [Experimental Evaluation](#8-experimental-evaluation)
-9. [Results & Analysis](#9-results--analysis)
-10. [Concrete Examples](#10-concrete-examples)
-11. [Critical Self-Assessment](#11-critical-self-assessment)
-12. [Future Enhancements](#12-future-enhancements)
-13. [Conclusion](#13-conclusion)
-14. [References](#14-references)
-15. [Appendices](#15-appendices)
+3. [Related Work](#3-related-work)
+4. [Original Architecture Analysis](#4-original-architecture-analysis)
+5. [The Sycophancy Problem](#5-the-sycophancy-problem)
+6. [Our Solution: Judge-Mediated Debate](#6-our-solution-judge-mediated-debate)
+7. [Architecture Comparison](#7-architecture-comparison)
+8. [Technical Implementation](#8-technical-implementation)
+9. [Experimental Evaluation](#9-experimental-evaluation)
+10. [Results & Analysis](#10-results--analysis)
+11. [Evaluation & Discussion](#11-evaluation--discussion)
+12. [Concrete Examples](#12-concrete-examples)
+13. [Critical Self-Assessment](#13-critical-self-assessment)
+14. [Future Enhancements](#14-future-enhancements)
+15. [Conclusion](#15-conclusion)
+16. [References](#16-references)
+17. [Appendices](#17-appendices)
 
 ---
 
@@ -122,9 +124,87 @@ When multiple agents engage in peer-to-peer debate, an emergent failure mode man
 
 ---
 
-## 3. Original Architecture Analysis
+## 3. Related Work
 
-### 3.1 Du et al. (2023) Framework
+### 3.1 Multi-Agent Debate for LLMs
+
+The foundational work by **Du et al. (2023)** established multi-agent debate as an efficacious approach for enhancing LLM reasoning capabilities. Their principal insights encompass:
+
+- Multiple LLM instances proposing and debating responses demonstrably improves factual accuracy
+- Debate enables autonomous self-correction without necessitating external verification mechanisms
+- The methodology generalizes effectively across mathematical, strategic, and factual reasoning domains
+
+However, their peer-to-peer architecture presupposes that agents will reliably identify and repudiate erroneous conclusions—an assumption that fails when confident incorrect agents exert undue influence upon uncertain correct ones.
+
+### 3.2 The Agreement Problem in Multi-Agent Systems
+
+**Hu et al. (2025)** formally characterized the "Peacemaker or Troublemaker" dilemma inherent to multi-agent debate systems. Their analysis elucidates:
+
+- Agreement can prove beneficial when facilitating correction of genuine errors
+- Agreement becomes deleterious when propagating confidently-expressed mistakes
+- No parsimonious heuristic adequately distinguishes beneficial from harmful agreement
+
+```mermaid
+flowchart LR
+    subgraph Beneficial["Beneficial Agreement"]
+        BA1["Agent A: Wrong"] --> BA2["Agent B: Correct"]
+        BA2 --> |"Convinces A"| BA3["Both Correct"]
+    end
+
+    subgraph Harmful["Harmful Agreement (Sycophancy)"]
+        HA1["Agent A: Wrong but Confident"] --> HA2["Agent B: Correct but Uncertain"]
+        HA2 --> |"Defers to A"| HA3["Both Wrong"]
+    end
+
+    style BA3 fill:#51cf66,stroke:#2f9e44,color:#fff
+    style HA3 fill:#ff6b6b,stroke:#c92a2a,color:#fff
+```
+
+### 3.3 LLM-as-Judge Paradigms
+
+Contemporary research has extensively explored leveraging LLMs as evaluators and adjudicators:
+
+| Paper | Year | Key Contribution |
+|-------|------|------------------|
+| **Hu et al. - Adaptive Stability Detection** | 2025 | Debate amplifies correctness relative to static ensemble approaches; stability detection optimizes efficiency |
+| **Liu et al. - M-MAD** | 2025 | Decoupling evaluation dimensions enables fine-grained assessment in MT evaluation |
+| **Google DeepMind - Sequential Consensus** | 2025 | Wald sequential analysis adaptively determines when sufficient consensus achieved |
+
+### 3.4 Gap in Existing Literature
+
+```mermaid
+flowchart TB
+    subgraph Existing["Existing Approaches"]
+        E1["Du et al.: Debate for reasoning"]
+        E2["Hu et al.: Stability detection"]
+        E3["Liu et al.: Dimensional decomposition"]
+    end
+
+    subgraph Gap["THE GAP"]
+        G1["Sycophancy as architectural vulnerability<br/>remains UNADDRESSED"]
+    end
+
+    subgraph Ours["Our Contribution"]
+        O1["Judge mediation as<br/>STRUCTURAL intervention"]
+    end
+
+    Existing --> Gap
+    Gap --> Ours
+
+    style Gap fill:#ffec99,stroke:#f59f00
+    style Ours fill:#51cf66,stroke:#2f9e44,color:#fff
+```
+
+Our work bridges this lacuna by:
+1. Identifying sycophancy as a fundamental architectural vulnerability rather than an incidental failure mode
+2. Proposing judge mediation as a structural intervention that architecturally precludes conformity bias
+3. Implementing and systematically evaluating the approach on a comprehensive multi-domain benchmark
+
+---
+
+## 4. Original Architecture Analysis
+
+### 4.1 Du et al. (2023) Framework
 
 **Paper:** [Improving Factuality and Reasoning in Language Models through Multiagent Debate](https://arxiv.org/abs/2305.14325)
 
@@ -132,7 +212,7 @@ When multiple agents engage in peer-to-peer debate, an emergent failure mode man
 
 The original paper proposes having multiple LLM agents solve the same problem, then critique each other's answers iteratively until they converge on a final answer.
 
-### 3.2 Original Architecture Diagram
+### 4.2 Original Architecture Diagram
 
 ```mermaid
 flowchart TB
@@ -165,7 +245,7 @@ flowchart TB
     end
 ```
 
-### 3.3 Original Protocol
+### 4.3 Original Protocol
 
 | Step | Action | Description |
 |------|--------|-------------|
@@ -174,7 +254,7 @@ flowchart TB
 | **Step 3** | Revision | Both agents generate new answers based on the critique they received |
 | **Step 4** | Convergence | Repeat Steps 2-3 until both agents output the same answer or max rounds reached |
 
-### 3.4 Original Sequence Diagram
+### 4.4 Original Sequence Diagram
 
 ```mermaid
 sequenceDiagram
@@ -211,15 +291,15 @@ sequenceDiagram
 
 ---
 
-## 4. The Sycophancy Problem
+## 5. The Sycophancy Problem
 
-### 4.1 Definition: Social Conformity Bias
+### 5.1 Definition: Social Conformity Bias
 
 **Sycophancy** constitutes a form of **Social Conformity Bias**—the systematic tendency of a language model to abandon its own internally-derived conclusions in favor of agreeing with peer or user inputs, regardless of the objective correctness of either position.
 
 This phenomenon, formally termed "disagreement collapse" by Hu et al. (2025), represents a fundamental failure mode where agents prioritize social harmony over epistemic accuracy.
 
-### 4.2 Theoretical Foundation
+### 5.2 Theoretical Foundation
 
 The theoretical underpinning of sycophancy draws from Asch's (1951) seminal conformity experiments, wherein human participants demonstrably altered correct perceptions to align with incorrect group consensus.
 
@@ -229,7 +309,7 @@ In multi-agent LLM systems, an analogous dynamic manifests:
 2. Agent B, despite possessing a correct initial solution, capitulates to A's apparent confidence
 3. Both agents converge upon an **erroneous consensus**
 
-### 4.3 Sycophancy Visualization
+### 5.3 Sycophancy Visualization
 
 ```mermaid
 flowchart LR
@@ -245,14 +325,14 @@ flowchart LR
     style WRONG fill:#ff6b6b,stroke:#c92a2a,color:#fff
 ```
 
-### 4.4 Why It's Deleterious
+### 5.4 Why It's Deleterious
 
 This phenomenon proves particularly deleterious because:
 - It transmutes a potential epistemic strength (collective intelligence) into a systematic vulnerability
 - Confidently-expressed errors propagate through the system rather than being attenuated
 - The system exhibits **false consensus**—superficial agreement masking underlying incorrectness
 
-### 4.5 The Core Vulnerability
+### 5.5 The Core Vulnerability
 
 ```
 ORIGINAL ARCHITECTURE VULNERABILITY:
@@ -266,7 +346,7 @@ Social pressure to agree (be "helpful")
 DISAGREEMENT COLLAPSE: Settle on wrong answer quickly
 ```
 
-### 4.6 Supporting Research
+### 5.6 Supporting Research
 
 | Paper | Year | Key Finding |
 |-------|------|-------------|
@@ -276,9 +356,9 @@ DISAGREEMENT COLLAPSE: Settle on wrong answer quickly
 
 ---
 
-## 5. Our Solution: Judge-Mediated Debate
+## 6. Our Solution: Judge-Mediated Debate
 
-### 5.1 Core Innovation
+### 6.1 Core Innovation
 
 Instead of agents talking directly to each other, we introduce **Agent C (The Judge)** who:
 1. Receives answers from both agents
@@ -286,7 +366,7 @@ Instead of agents talking directly to each other, we introduce **Agent C (The Ju
 3. Provides feedback WITHOUT showing peer answers
 4. Prevents the social pressure that causes sycophancy
 
-### 5.2 New Architecture Diagram
+### 6.2 New Architecture Diagram
 
 ```mermaid
 flowchart TB
@@ -324,7 +404,7 @@ flowchart TB
     style FINAL2 fill:#51cf66,stroke:#2f9e44,color:#fff
 ```
 
-### 5.3 New Protocol
+### 6.3 New Protocol
 
 | Step | Action | Key Difference |
 |------|--------|----------------|
@@ -333,7 +413,7 @@ flowchart TB
 | **Step 3** | Judge Feedback | **NEW:** Each agent receives critique from Judge, NOT from peer |
 | **Step 4** | Convergence | Judge declares CONSENSUS only when both are logically correct |
 
-### 5.4 New Sequence Diagram
+### 6.4 New Sequence Diagram
 
 ```mermaid
 sequenceDiagram
@@ -369,7 +449,7 @@ sequenceDiagram
     Note over A,J: SOLUTION - No Sycophancy Risk!
 ```
 
-### 5.5 Formal Update Rules
+### 6.5 Formal Update Rules
 
 **Standard Debate Update Rule (Vulnerable to Conformity Bias):**
 
@@ -383,7 +463,7 @@ $$R_i^{(t+1)} = \text{LLM}_i\left(q, R_i^{(t)}, \text{Judge}\left(R_1^{(t)}, R_2
 
 Agents receive exclusively the judge's evaluation, thereby **structurally decoupling** the conformity bias pathway.
 
-### 5.6 Sycophancy Formalization
+### 6.6 Sycophancy Formalization
 
 We formally define sycophancy as a state transition where:
 
@@ -396,9 +476,9 @@ Sycophancy occurs when a **correct agent becomes incorrect after agreeing with a
 
 ---
 
-## 6. Architecture Comparison
+## 7. Architecture Comparison
 
-### 6.1 Side-by-Side Visual Comparison
+### 7.1 Side-by-Side Visual Comparison
 
 ```mermaid
 flowchart LR
@@ -423,7 +503,7 @@ flowchart LR
     style NJ fill:#74c0fc,stroke:#1971c2,color:#000
 ```
 
-### 6.2 Comprehensive Differences Table
+### 7.2 Comprehensive Differences Table
 
 | Aspect | Original (Du et al.) | Our Solution |
 |--------|---------------------|--------------|
@@ -435,7 +515,7 @@ flowchart LR
 | **Temperature** | Same for all agents | Agents: 0.7, Judge: 0.3 |
 | **Error Propagation** | High (confident errors spread) | Low (judge filters errors) |
 
-### 6.3 Network Topology Comparison
+### 7.3 Network Topology Comparison
 
 ```mermaid
 flowchart TB
@@ -465,7 +545,7 @@ flowchart TB
     style GOOD fill:#51cf66,stroke:#2f9e44,color:#fff
 ```
 
-### 6.4 Information Flow Control
+### 7.4 Information Flow Control
 
 ```mermaid
 flowchart LR
@@ -486,9 +566,9 @@ flowchart LR
 
 ---
 
-## 7. Technical Implementation
+## 8. Technical Implementation
 
-### 7.1 System Architecture
+### 8.1 System Architecture
 
 ```mermaid
 flowchart TB
@@ -524,7 +604,7 @@ flowchart TB
     EXTRACT --> GEN --> EVAL
 ```
 
-### 7.2 Class Hierarchy
+### 8.2 Class Hierarchy
 
 ```mermaid
 classDiagram
@@ -570,7 +650,7 @@ classDiagram
     JudgeAgent --> SmartClient : uses
 ```
 
-### 7.3 Hyperparameter Rationale: Temperature Differentiation
+### 8.3 Hyperparameter Rationale: Temperature Differentiation
 
 | Component | Temperature | Rationale |
 |-----------|-------------|-----------|
@@ -579,7 +659,7 @@ classDiagram
 
 This temperature differential operationalizes the **exploration-exploitation trade-off**: agents explore diverse solutions while the judge exploits consistent evaluation criteria.
 
-### 7.4 Judge Decision Protocol
+### 8.4 Judge Decision Protocol
 
 The judge agent renders decisions through a structured evaluation process:
 
@@ -590,7 +670,7 @@ The judge agent renders decisions through a structured evaluation process:
    - **REJECTED:** Issued when one or both solutions contain logical flaws, with specific errors identified
 4. **Feedback Generation:** The judge articulates specific, actionable feedback that agents can incorporate without seeing peer responses
 
-### 7.5 Hybrid Inference State Machine
+### 8.5 Hybrid Inference State Machine
 
 ```mermaid
 stateDiagram-v2
@@ -620,7 +700,7 @@ stateDiagram-v2
     Simulation --> [*]
 ```
 
-### 7.6 Docker Container Architecture
+### 8.6 Docker Container Architecture
 
 ```mermaid
 flowchart LR
@@ -647,7 +727,7 @@ flowchart LR
     Webapp -.-> |"HTTPS"| HF
 ```
 
-### 7.7 Olympiad Mode
+### 8.7 Olympiad Mode
 
 For mathematical reasoning tasks, we implement competition-grade verification:
 
@@ -683,11 +763,62 @@ flowchart TB
 - **Strict Rejection:** A single logical flaw is sufficient for rejection
 - **No Partial Credit:** Solutions are CONSENSUS or REJECTED
 
+### 8.8 Error Handling Flow
+
+The system implements comprehensive error handling to ensure robust operation:
+
+```mermaid
+flowchart TB
+    API["API Call"] --> TRY{"Try Provider"}
+
+    TRY --> |"Success"| RETURN["Return Response"]
+
+    TRY --> |"AuthError/RateLimit"| SWITCH["Switch to Local"]
+    SWITCH --> TRY
+
+    TRY --> |"Timeout"| SIM["Simulation Mode"]
+    TRY --> |"ConnectionError"| SWITCH
+
+    SIM --> CONTEXT{"Detect Context"}
+    CONTEXT --> |"Judge"| JUDGE_RESP["Mock Judge Feedback"]
+    CONTEXT --> |"Critique"| CRITIQUE_RESP["Mock Critique"]
+    CONTEXT --> |"Other"| MATH_RESP["Mock Math Solution"]
+
+    JUDGE_RESP --> RETURN
+    CRITIQUE_RESP --> RETURN
+    MATH_RESP --> RETURN
+
+    style RETURN fill:#51cf66,stroke:#2f9e44,color:#fff
+    style SIM fill:#74c0fc,stroke:#1971c2
+```
+
+### 8.9 Answer Extraction Algorithm
+
+Agent responses are parsed to extract final answers using a multi-stage pattern matching approach:
+
+```mermaid
+flowchart LR
+    INPUT["Agent Response Text"] --> P1["Pattern 1:\nFinal Answer: X"]
+    P1 --> |"No match"| P2["Pattern 2:\nThe answer is X"]
+    P2 --> |"No match"| P3["Pattern 3:\n(X) format"]
+    P3 --> |"No match"| FALLBACK["Fallback:\nExtract last letter"]
+
+    P1 --> |"Match"| EXTRACT["Extract Answer"]
+    P2 --> |"Match"| EXTRACT
+    P3 --> |"Match"| EXTRACT
+    FALLBACK --> EXTRACT
+
+    EXTRACT --> UPPER["Normalize to\nUppercase A/B/C/D"]
+    UPPER --> OUTPUT["Final Answer"]
+
+    style OUTPUT fill:#51cf66,stroke:#2f9e44,color:#fff
+```
+
 ---
 
-## 8. Experimental Evaluation
+## 9. Experimental Evaluation
 
-### 8.1 Dataset: MMLU Benchmark
+### 9.1 Dataset: MMLU Benchmark
 
 We evaluate on the **Massive Multitask Language Understanding (MMLU)** benchmark (Hendrycks et al., 2021), which covers 57 subject areas across:
 
@@ -702,14 +833,14 @@ We evaluate on the **Massive Multitask Language Understanding (MMLU)** benchmark
 - Question format: Multiple choice (A, B, C, D)
 - Deterministic sampling with fixed random seed for reproducibility
 
-### 8.2 Experimental Configurations
+### 9.2 Experimental Configurations
 
 | Configuration | Agents | Rounds | Architecture | Output File |
 |---------------|--------|--------|--------------|-------------|
 | **Standard (3_2)** | 3 (A, B, C) | 2 | Peer-to-peer | mmlu_3_2.json |
 | **Mediated (2_3)** | 2 (A, B) + Judge | 3 | Star topology | mmlu_2_3.json |
 
-### 8.3 Evaluation Pipeline
+### 9.3 Evaluation Pipeline
 
 ```mermaid
 flowchart LR
@@ -740,7 +871,7 @@ flowchart LR
     end
 ```
 
-### 8.4 Accuracy Computation
+### 9.4 Accuracy Computation
 
 For each question, we use **majority voting** across agents:
 
@@ -755,9 +886,9 @@ Per-subject metrics:
 
 ---
 
-## 9. Results & Analysis
+## 10. Results & Analysis
 
-### 9.1 Overall Performance Summary
+### 10.1 Overall Performance Summary
 
 | Metric | Standard Debate (3_2) | Mediated Debate (2_3) |
 |--------|----------------------|----------------------|
@@ -774,7 +905,7 @@ pie title Subject Performance Distribution (Mediated Debate)
     "Partial (66.7%)" : 10
 ```
 
-### 9.2 Configuration Comparison
+### 10.2 Configuration Comparison
 
 | Accuracy Level | Standard (3_2) | Mediated (2_3) | Difference |
 |----------------|----------------|----------------|------------|
@@ -784,7 +915,7 @@ pie title Subject Performance Distribution (Mediated Debate)
 
 **Key Observation:** Mediated debate eliminates the worst-performing category (33.3% accuracy in security_studies under standard debate improves to 66.7% with mediation).
 
-### 9.3 Improvement from Judge Mediation
+### 10.3 Improvement from Judge Mediation
 
 | Subject | Standard (3_2) | Mediated (2_3) | Improvement |
 |---------|----------------|----------------|-------------|
@@ -795,7 +926,7 @@ pie title Subject Performance Distribution (Mediated Debate)
 
 **Analysis:** These subjects involve nuanced reasoning where peer pressure in standard debate leads to incorrect consensus. Judge mediation prevents this by providing authoritative feedback.
 
-### 9.4 Domain-Level Analysis
+### 10.4 Domain-Level Analysis
 
 ```mermaid
 flowchart TB
@@ -818,7 +949,7 @@ flowchart TB
     Partial --> |"Knowledge-Intensive"| Weak["Weaker: Requires<br/>domain expertise"]
 ```
 
-### 9.5 Standard Error Analysis
+### 10.5 Standard Error Analysis
 
 All subjects show standard error of either:
 - **0.0** (perfect accuracy, no variance)
@@ -829,9 +960,157 @@ $$\text{SEM} = \sqrt{\frac{p(1-p)}{n}} = \sqrt{\frac{0.667 \times 0.333}{3}} \ap
 
 ---
 
-## 10. Concrete Examples
+## 11. Evaluation & Discussion
 
-### 10.1 Mediated Debate Example: Arithmetic Problem
+### 11.1 Addressing the Research Problem
+
+Our judge-mediated architecture effectively addresses sycophancy by:
+
+1. **Breaking Information Flow:** Agents never see peer responses directly, eliminating the social pressure pathway.
+
+2. **Authoritative Feedback:** The judge provides critical evaluation rather than peer agreement signals.
+
+3. **Consistent Standards:** Lower temperature (0.3) for the judge ensures deterministic, logical feedback.
+
+4. **Explicit Error Identification:** Judge prompts require identifying specific errors, not just expressing agreement.
+
+### 11.2 Theoretical Analysis
+
+**Why Mediated Debate Works:**
+
+In standard debate, the update rule allows sycophantic influence:
+$$R_i^{(t+1)} = f\left(R_i^{(t)}, \text{Critique}(R_j^{(t)})\right)$$
+
+If Agent $j$ is confident but wrong, their critique may pressure Agent $i$ to conform.
+
+In mediated debate:
+$$R_i^{(t+1)} = f\left(R_i^{(t)}, \text{Judge}(\cdot)\right)$$
+
+The judge function is designed to:
+- Maximize logical correctness
+- Minimize premature agreement
+- Provide objective evaluation
+
+This removes the direct influence channel for sycophancy.
+
+```mermaid
+flowchart TB
+    subgraph Standard["Standard Debate Update"]
+        S_INPUT["Agent i: Current Answer"] --> S_PEER["Peer j: Critique"]
+        S_PEER --> S_UPDATE["Updated Answer"]
+        S_PEER -.-> |"Social Pressure"| S_BIAS["Conformity Bias Risk"]
+    end
+
+    subgraph Mediated["Mediated Debate Update"]
+        M_INPUT["Agent i: Current Answer"] --> M_JUDGE["Judge: Evaluation"]
+        M_JUDGE --> M_UPDATE["Updated Answer"]
+        M_JUDGE --> |"Objective Feedback"| M_CORRECT["No Bias Pathway"]
+    end
+
+    style S_BIAS fill:#ff6b6b,stroke:#c92a2a,color:#fff
+    style M_CORRECT fill:#51cf66,stroke:#2f9e44,color:#fff
+```
+
+### 11.3 Strengths of Our Approach
+
+1. **Architectural Simplicity:** The star topology is straightforward to implement and reason about.
+
+2. **Scalability:** Adding more debate agents doesn't increase pairwise communication complexity.
+
+3. **Robustness:** Hybrid inference with three fallback levels ensures reliability.
+
+4. **Reproducibility:** Dockerized deployment enables consistent environments.
+
+5. **Interpretability:** Judge feedback is logged and can be analyzed for debugging.
+
+### 11.4 Limitations and Threats to Validity
+
+| Limitation | Impact | Mitigation |
+|------------|--------|------------|
+| **Sample Size (n=3)** | High variance in per-subject accuracy | Expand to n≥20 in future work |
+| **Model Dependence** | Results may vary with different LLMs | Test with GPT-5-mini, need cross-model validation |
+| **Judge Quality** | Single point of failure if judge errs | Implement ensemble judging |
+| **Benchmark Scope** | MMLU focuses on knowledge tasks | Evaluate on reasoning-intensive benchmarks |
+| **Computational Cost** | Additional LLM calls for judge | Implement early stopping optimization |
+
+### 11.5 Comparison with Related Work
+
+```mermaid
+flowchart LR
+    subgraph Approaches["Multi-Agent Debate Approaches"]
+        DU["Du et al. (2023)\nPeer-to-Peer"]
+        HU["Hu et al. (2025)\nStability Detection"]
+        LIU["Liu et al. (2025)\nDimensional Decomposition"]
+        OURS["Our Approach\nJudge Mediation"]
+    end
+
+    subgraph Sycophancy["Sycophancy Handling"]
+        NONE["None"]
+        POST["Post-hoc Detection"]
+        STRUC["Structural Prevention"]
+    end
+
+    DU --> NONE
+    HU --> POST
+    LIU --> NONE
+    OURS --> STRUC
+
+    style NONE fill:#ff6b6b,stroke:#c92a2a,color:#fff
+    style POST fill:#ffec99,stroke:#f59f00
+    style STRUC fill:#51cf66,stroke:#2f9e44,color:#fff
+```
+
+| Approach | Sycophancy Handling | Evaluation | Scalability |
+|----------|---------------------|------------|-------------|
+| Du et al. (2023) | None | GSM8K, Chess | Good |
+| Hu et al. (2025) | Stability detection | Judgment tasks | Moderate |
+| Liu et al. (2025) | Dimensional decomposition | MT evaluation | Good |
+| **Ours** | Structural (judge mediation) | MMLU (57 subjects) | Good |
+
+Our approach is unique in addressing sycophancy through **architectural design** rather than post-hoc detection or aggregation strategies.
+
+### 11.6 Practical Implications
+
+For **enterprise deployment** of multi-agent systems:
+
+```mermaid
+flowchart TB
+    subgraph Recommendations["Deployment Recommendations"]
+        direction TB
+        R1["1. Prefer Mediated Architectures\nWhen correctness matters more than speed"]
+        R2["2. Domain-Specific Judges\nFor medicine, law, finance"]
+        R3["3. Hybrid Inference\nLocal fallback for availability"]
+        R4["4. Olympiad Mode\nFor critical, high-stakes tasks"]
+    end
+
+    subgraph Outcomes["Expected Outcomes"]
+        O1["Reduced false consensus"]
+        O2["Higher accuracy in specialized domains"]
+        O3["24/7 operational reliability"]
+        O4["Competition-grade error detection"]
+    end
+
+    R1 --> O1
+    R2 --> O2
+    R3 --> O3
+    R4 --> O4
+```
+
+**Key Takeaways:**
+
+1. **Prefer Mediated Architectures:** When correctness matters more than speed, use judge mediation.
+
+2. **Domain-Specific Judges:** For specialized domains (medicine, law), consider fine-tuned judge models.
+
+3. **Hybrid Inference:** Local fallback ensures availability when cloud APIs are unavailable.
+
+4. **Olympiad Mode for Critical Tasks:** When errors are costly, enable strict verification.
+
+---
+
+## 12. Concrete Examples
+
+### 12.1 Mediated Debate Example: Arithmetic Problem
 
 **Question:** *"A coffee shop sells coffee for $2.50 per cup and tea for $1.75 per cup. If a customer buys 4 cups of coffee and 3 cups of tea, how much does the customer pay in total?"*
 
@@ -886,7 +1165,7 @@ CONSENSUS: Both solutions are correct.
 
 ---
 
-### 10.2 Standard Debate Example: Abstract Algebra
+### 12.2 Standard Debate Example: Abstract Algebra
 
 **Question:** *"Statement 1 | If a group has an element of order 15 it must have at least 8 elements of order 15. Statement 2 | If a group has more than 8 elements of order 15, it must have at least 16 elements of order 15."*
 
@@ -928,7 +1207,7 @@ This case shows **beneficial agreement** - both agents were correct from the sta
 
 ---
 
-### 10.3 Comparison: Why Mediated Debate Outperforms
+### 12.3 Comparison: Why Mediated Debate Outperforms
 
 ```mermaid
 flowchart TB
@@ -958,9 +1237,9 @@ flowchart TB
 
 ---
 
-## 11. Critical Self-Assessment
+## 13. Critical Self-Assessment
 
-### 11.1 Identified Weaknesses and Proposed Remediation
+### 13.1 Identified Weaknesses and Proposed Remediation
 
 | # | Weakness | Impact | Proposed Fix |
 |---|----------|--------|--------------|
@@ -968,7 +1247,7 @@ flowchart TB
 | 2 | **No Direct Sycophancy Measurement** | We infer sycophancy reduction from accuracy improvements, but do not directly measure agent belief changes | Implement belief-tracking by logging agent confidence scores before and after peer/judge exposure |
 | 3 | **Judge is Also an LLM** | The judge may exhibit its own biases or errors, creating a single point of failure | Implement ensemble judging with 3+ judges and majority voting, or integrate ReAct for empirical verification |
 
-### 11.2 Logical Gap Analysis
+### 13.2 Logical Gap Analysis
 
 | Claim Made | Supporting Evidence | Gap Assessment |
 |------------|---------------------|----------------|
@@ -977,7 +1256,7 @@ flowchart TB
 | "Judge mediation prevents echo chamber" | Architectural argument + improved results | ✓ Theoretically grounded and empirically supported |
 | "Olympiad mode catches more errors" | Not directly compared to non-Olympiad mode | ⚠ Claim requires ablation study for full validation |
 
-### 11.3 Methodology Clarifications
+### 13.3 Methodology Clarifications
 
 **Q: Why temperature=0.3 for Judge but 0.7 for Agents?**
 
@@ -997,9 +1276,9 @@ This architectural difference—not the number of agents or rounds—constitutes
 
 ---
 
-## 12. Future Enhancements
+## 14. Future Enhancements
 
-### 12.1 Proposed Improvements
+### 14.1 Proposed Improvements
 
 1. **Larger-Scale Evaluation:** Expand to 20+ questions per subject for stronger statistical conclusions.
 
@@ -1011,7 +1290,7 @@ This architectural difference—not the number of agents or rounds—constitutes
 
 5. **Cross-Model Generalization:** Evaluate with different LLM families (Claude, Gemini, LLaMA) to assess approach generality.
 
-### 12.2 Integration with ReAct Agents
+### 14.2 Integration with ReAct Agents
 
 While this project focused on internal reasoning consistency, future iterations could integrate the **ReAct (Reasoning + Acting) paradigm** (Yao et al., 2022).
 
@@ -1039,9 +1318,9 @@ flowchart TB
 
 ---
 
-## 13. Conclusion
+## 15. Conclusion
 
-### 13.1 Summary
+### 15.1 Summary
 
 This investigation addressed the sycophancy problem—a manifestation of social conformity bias—in multi-agent debate systems for Large Language Models. Our principal contributions encompass:
 
@@ -1055,7 +1334,7 @@ This investigation addressed the sycophancy problem—a manifestation of social 
 
 5. **Domain Analysis:** We elucidated that formal reasoning domains (mathematics, physics, computer science, logic) achieve uniformly perfect accuracy, while knowledge-intensive domains (life sciences, chemistry) present persistent challenges requiring domain-specific interventions.
 
-### 13.2 Key Findings
+### 15.2 Key Findings
 
 1. **Judge mediation attenuates sycophancy:** By architecturally eliminating direct agent-to-agent communication, we preclude the pathway through which confidence-based influence propagates.
 
@@ -1065,7 +1344,7 @@ This investigation addressed the sycophancy problem—a manifestation of social 
 
 4. **Hybrid inference enables reliability:** Three-level fallback architecture ensures the system maintains operational continuity under diverse deployment conditions.
 
-### 13.3 The Fundamental Shift
+### 15.3 The Fundamental Shift
 
 Our work represents a fundamental shift from:
 
@@ -1079,7 +1358,7 @@ This distinction is crucial—prompting approaches attempt to modify behavior wi
 
 ---
 
-## 14. References
+## 16. References
 
 1. Du, Y., Li, S., Torralba, A., Tenenbaum, J. B., & Mordatch, I. (2023). Improving Factuality and Reasoning in Language Models through Multiagent Debate. *arXiv preprint arXiv:2305.14325*.
 
@@ -1101,7 +1380,7 @@ This distinction is crucial—prompting approaches attempt to modify behavior wi
 
 ---
 
-## 15. Appendices
+## 17. Appendices
 
 ### Appendix A: Complete Subject-Level Results
 
