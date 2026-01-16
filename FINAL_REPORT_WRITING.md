@@ -61,6 +61,8 @@ Our enhancement introduces a **Judge-Mediated Debate Architecture** where an imp
 
 ### 1.3 Key Results
 
+**Fig_01: Performance Comparison (Standard vs Mediated Debate)** ([Fig_01.png](/assets/Fig_01.png))  
+**Fig_01_description:** Pie chart comparing overall accuracy between Standard Debate and Judge-Mediated Debate.
 ```mermaid
 pie title Performance Comparison
     "Mediated Debate (94.7%)" : 94.7
@@ -85,6 +87,8 @@ Large Language Models (LLMs) have demonstrated remarkable capabilities in reason
 
 The fundamental challenge in deploying LLMs bifurcates into two distinct failure modes:
 
+**Fig_02: Two Failure Modes (Hallucination vs Conformity Bias)** ([Fig_02.png](/assets/Fig_02.png))  
+**Fig_02_description:** Diagram contrasting single-agent hallucination with multi-agent conformity bias, and showing how judge mediation structurally decouples the bias pathway.
 ```mermaid
 flowchart TB
     subgraph SingleAgent["Single-Agent System"]
@@ -144,6 +148,8 @@ However, their peer-to-peer architecture presupposes that agents will reliably i
 - Agreement becomes deleterious when propagating confidently-expressed mistakes
 - No parsimonious heuristic adequately distinguishes beneficial from harmful agreement
 
+**Fig_03: Beneficial vs Harmful Agreement in Debate** ([Fig_03.png](/assets/Fig_03.png))  
+**Fig_03_description:** Illustration of agreement helping when a correct agent corrects a wrong agent, versus sycophancy when a correct-but-uncertain agent defers to a wrong-but-confident peer.
 ```mermaid
 flowchart LR
     subgraph Beneficial["Beneficial Agreement"]
@@ -172,6 +178,8 @@ Contemporary research has extensively explored leveraging LLMs as evaluators and
 
 ### 3.4 Gap in Existing Literature
 
+**Fig_04: Literature Gap (Sycophancy Unaddressed)** ([Fig_04.png](/assets/Fig_04.png))  
+**Fig_04_description:** Summary of existing debate-related approaches and the identified gap: sycophancy as an architectural vulnerability; motivates judge mediation as the contribution.
 ```mermaid
 flowchart TB
     subgraph Existing["Existing Approaches"]
@@ -214,6 +222,8 @@ The original paper proposes having multiple LLM agents solve the same problem, t
 
 ### 4.2 Original Architecture Diagram
 
+**Fig_05: Original Peer-to-Peer Debate Architecture (Du et al., 2023)** ([Fig_05.png](/assets/Fig_05.png))  
+**Fig_05_description:** Flowchart of the original mesh-style protocol: initial generation → cross-critique → revision → convergence check loop.
 ```mermaid
 flowchart TB
     subgraph Original["ORIGINAL: Peer-to-Peer Debate (Du et al., 2023)"]
@@ -256,6 +266,8 @@ flowchart TB
 
 ### 4.4 Original Sequence Diagram
 
+**Fig_06: Original Peer-to-Peer Sequence Diagram** ([Fig_06.png](/assets/Fig_06.png))  
+**Fig_06_description:** Sequence view of question delivery, mutual sharing, critique, and revision cycles until convergence in the original peer-to-peer system.
 ```mermaid
 sequenceDiagram
     participant Q as Question
@@ -311,6 +323,8 @@ In multi-agent LLM systems, an analogous dynamic manifests:
 
 ### 5.3 Sycophancy Visualization
 
+**Fig_07: Sycophancy (Disagreement Collapse) Visualization** ([Fig_07.png](/assets/Fig_07.png))  
+**Fig_07_description:** Conceptual diagram showing how social pressure to agree can turn a correct-but-uncertain agent into an incorrect consensus with a wrong-but-confident agent.
 ```mermaid
 flowchart LR
     subgraph Problem["THE SYCOPHANCY PROBLEM"]
@@ -368,6 +382,8 @@ Instead of agents talking directly to each other, we introduce **Agent C (The Ju
 
 ### 6.2 New Architecture Diagram
 
+**Fig_08: Judge-Mediated Debate Architecture (Star Topology)** ([Fig_08.png](/assets/Fig_08.png))  
+**Fig_08_description:** Proposed architecture where agents submit answers to a judge, receive judge feedback without peer exposure, and iterate until verified consensus.
 ```mermaid
 flowchart TB
     subgraph New["OUR SOLUTION: Judge-Mediated Debate"]
@@ -415,6 +431,8 @@ flowchart TB
 
 ### 6.4 New Sequence Diagram
 
+**Fig_09: Judge-Mediated Debate Sequence Diagram** ([Fig_09.png](/assets/Fig_09.png))  
+**Fig_09_description:** Sequence view of agent submissions to a judge, judge evaluation, feedback, and iteration without agents seeing each other’s answers.
 ```mermaid
 sequenceDiagram
     participant Q as Question
@@ -480,6 +498,8 @@ Sycophancy occurs when a **correct agent becomes incorrect after agreeing with a
 
 ### 7.1 Side-by-Side Visual Comparison
 
+**Fig_10: Architecture Comparison (Mesh vs Star)** ([Fig_10.png](/assets/Fig_10.png))  
+**Fig_10_description:** Side-by-side contrast between direct peer-to-peer communication and judge-mediated hub-and-spoke communication, highlighting sycophancy risk reduction.
 ```mermaid
 flowchart LR
     subgraph Original["ORIGINAL (Du et al.)"]
@@ -517,6 +537,8 @@ flowchart LR
 
 ### 7.3 Network Topology Comparison
 
+**Fig_11: Network Topology Comparison** ([Fig_11.png](/assets/Fig_11.png))  
+**Fig_11_description:** Visual comparison of connection complexity and vulnerability in mesh topology versus centralized control in star topology.
 ```mermaid
 flowchart TB
     subgraph Mesh["MESH TOPOLOGY (Original)"]
@@ -547,6 +569,8 @@ flowchart TB
 
 ### 7.4 Information Flow Control
 
+**Fig_12: Information Flow Control (Blocked vs Allowed)** ([Fig_12.png](/assets/Fig_12.png))  
+**Fig_12_description:** Diagram showing which signals are blocked (peer confidence/answers) and which are allowed (answers to judge; filtered feedback to agents) in the mediated system.
 ```mermaid
 flowchart LR
     subgraph Blocked["BLOCKED in Our System"]
@@ -570,6 +594,8 @@ flowchart LR
 
 ### 8.1 System Architecture
 
+**Fig_13: System Architecture Overview** ([Fig_13.png](/assets/Fig_13.png))  
+**Fig_13_description:** End-to-end system layout: UI → core debate engine → hybrid inference layer → evaluation pipeline (extract → generate → evaluate).
 ```mermaid
 flowchart TB
     subgraph UI["User Interface Layer"]
@@ -606,6 +632,8 @@ flowchart TB
 
 ### 8.2 Class Hierarchy
 
+**Fig_14: Core Class Hierarchy** ([Fig_14.png](/assets/Fig_14.png))  
+**Fig_14_description:** Class diagram highlighting the `SmartClient`, debate agents, and judge agent responsibilities and relationships.
 ```mermaid
 classDiagram
     class SmartClient {
@@ -672,6 +700,8 @@ The judge agent renders decisions through a structured evaluation process:
 
 ### 8.5 Hybrid Inference State Machine
 
+**Fig_15: Hybrid Inference State Machine** ([Fig_15.png](/assets/Fig_15.png))  
+**Fig_15_description:** State transitions for provider selection and fallback (cloud → local → simulation) under authentication, rate-limit, timeout, or connectivity failures.
 ```mermaid
 stateDiagram-v2
     [*] --> Initialize
@@ -702,6 +732,8 @@ stateDiagram-v2
 
 ### 8.6 Docker Container Architecture
 
+**Fig_16: Docker Compose Deployment Topology** ([Fig_16.png](/assets/Fig_16.png))  
+**Fig_16_description:** Container-level architecture showing Streamlit webapp, Ollama service, and external API connections used by the system.
 ```mermaid
 flowchart LR
     subgraph Docker["Docker Compose"]
@@ -731,6 +763,8 @@ flowchart LR
 
 For mathematical reasoning tasks, we implement competition-grade verification:
 
+**Fig_17: Olympiad Agent and Judge Protocols** ([Fig_17.png](/assets/Fig_17.png))  
+**Fig_17_description:** Protocol diagrams defining strict reasoning requirements for agents and verification-only, first-fatal-error judging for the judge.
 ```mermaid
 flowchart TB
     subgraph Agent["Olympiad Agent Requirements"]
@@ -767,6 +801,8 @@ flowchart TB
 
 The system implements comprehensive error handling to ensure robust operation:
 
+**Fig_18: Error Handling and Fallback Flow** ([Fig_18.png](/assets/Fig_18.png))  
+**Fig_18_description:** Flowchart of error handling: try provider → switch to local on auth/rate-limit → simulation mode on timeout, with context-aware simulated responses.
 ```mermaid
 flowchart TB
     API["API Call"] --> TRY{"Try Provider"}
@@ -796,6 +832,8 @@ flowchart TB
 
 Agent responses are parsed to extract final answers using a multi-stage pattern matching approach:
 
+**Fig_19: Answer Extraction Algorithm** ([Fig_19.png](/assets/Fig_19.png))  
+**Fig_19_description:** Multi-stage parsing pipeline for extracting final answers from agent text (pattern matching with fallbacks and normalization).
 ```mermaid
 flowchart LR
     INPUT["Agent Response Text"] --> P1["Pattern 1:\nFinal Answer: X"]
@@ -842,6 +880,8 @@ We evaluate on the **Massive Multitask Language Understanding (MMLU)** benchmark
 
 ### 9.3 Evaluation Pipeline
 
+**Fig_20: Evaluation Pipeline (Extract → Generate → Evaluate)** ([Fig_20.png](/assets/Fig_20.png))  
+**Fig_20_description:** End-to-end benchmark workflow: extract questions → generate debate responses → compute metrics and subject-level reports.
 ```mermaid
 flowchart LR
     subgraph Step1["Step 1: Extract"]
@@ -899,6 +939,8 @@ Per-subject metrics:
 | **Partial Accuracy Subjects** | 12 (21.1%) | 10 (17.5%) |
 | **Overall Accuracy** | ~91.8% | ~94.7% |
 
+**Fig_21: Subject Performance Distribution (Mediated Debate)** ([Fig_21.png](/assets/Fig_21.png))  
+**Fig_21_description:** Pie chart summarizing subject-level outcomes for mediated debate (perfect vs partial subjects).
 ```mermaid
 pie title Subject Performance Distribution (Mediated Debate)
     "Perfect (100%)" : 47
@@ -929,6 +971,8 @@ pie title Subject Performance Distribution (Mediated Debate)
 
 ### 10.4 Domain-Level Analysis
 
+**Fig_22: Domain-Level Performance Intuition** ([Fig_22.png](/assets/Fig_22.png))  
+**Fig_22_description:** High-level grouping of domains into strong (formal/structured reasoning) versus weaker (knowledge-intensive) areas based on observed results patterns.
 ```mermaid
 flowchart TB
     subgraph Perfect["Perfect Performance Domains"]
@@ -994,6 +1038,8 @@ The judge function is designed to:
 
 This removes the direct influence channel for sycophancy.
 
+**Fig_23: Update Rule Comparison (Standard vs Mediated)** ([Fig_23.png](/assets/Fig_23.png))  
+**Fig_23_description:** Conceptual diagram contrasting how peer critique introduces conformity bias risk in standard debate versus objective judge feedback in mediated debate.
 ```mermaid
 flowchart TB
     subgraph Standard["Standard Debate Update"]
@@ -1036,6 +1082,8 @@ flowchart TB
 
 ### 11.5 Comparison with Related Work
 
+**Fig_24: Related Work Mapping by Sycophancy Handling** ([Fig_24.png](/assets/Fig_24.png))  
+**Fig_24_description:** Diagram positioning this work relative to prior debate approaches, emphasizing judge mediation as a structural intervention for sycophancy.
 ```mermaid
 flowchart LR
     subgraph Approaches["Multi-Agent Debate Approaches"]
@@ -1074,6 +1122,8 @@ Our approach is unique in addressing sycophancy through **architectural design**
 
 For **enterprise deployment** of multi-agent systems:
 
+**Fig_25: Deployment Recommendations and Outcomes** ([Fig_25.png](/assets/Fig_25.png))  
+**Fig_25_description:** Practical guidance for deploying mediated architectures, domain-specific judges, hybrid inference, and olympiad mode, mapped to expected outcomes.
 ```mermaid
 flowchart TB
     subgraph Recommendations["Deployment Recommendations"]
@@ -1210,6 +1260,8 @@ This case shows **beneficial agreement** - both agents were correct from the sta
 
 ### 12.3 Comparison: Why Mediated Debate Outperforms
 
+**Fig_26: Why Mediated Debate Outperforms (Risk Scenario)** ([Fig_26.png](/assets/Fig_26.png))  
+**Fig_26_description:** Side-by-side scenario showing how standard debate can induce wrong consensus under peer pressure, while judge mediation guides correction to the right answer.
 ```mermaid
 flowchart TB
     subgraph Standard["Standard Debate: Risk Scenario"]
@@ -1297,6 +1349,8 @@ While this project focused on internal reasoning consistency, future iterations 
 
 In this proposed architecture, the Judge agent would not only evaluate logical consistency but also possess the capability to execute external tool calls (e.g., Python REPL, Wolfram Alpha, web search) to verify factual claims empirically.
 
+**Fig_27: Future Architecture (ReAct-Enhanced Judge)** ([Fig_27.png](/assets/Fig_27.png))  
+**Fig_27_description:** Proposed extension where the judge performs tool-assisted empirical verification (Python/Wolfram/web) to produce grounded verdicts.
 ```mermaid
 flowchart TB
     subgraph Current["Current Architecture"]
