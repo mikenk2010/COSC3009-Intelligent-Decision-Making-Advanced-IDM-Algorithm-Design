@@ -640,7 +640,7 @@ Subjects where mediated debate outperforms standard debate:
 
 | Subject | Standard (3_2) | Mediated (2_3) | Improvement |
 |---------|----------------|----------------|-------------|
-| grade_school_math| 85%(original paper) | 100% | 15% |
+| grade_school_math| 85%(original paper) | 100% | +15% |
 | high_school_macroeconomics | 66.7% | 100% | +33.3% |
 | moral_scenarios | 66.7% | 100% | +33.3% |
 | professional_law | 66.7% | 100% | +33.3% |
