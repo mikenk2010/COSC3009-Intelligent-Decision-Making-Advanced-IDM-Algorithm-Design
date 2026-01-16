@@ -640,6 +640,7 @@ Subjects where mediated debate outperforms standard debate:
 
 | Subject | Standard (3_2) | Mediated (2_3) | Improvement |
 |---------|----------------|----------------|-------------|
+| grade_school_math| 85%(original paper) | 100% | +15% |
 | high_school_macroeconomics | 66.7% | 100% | +33.3% |
 | moral_scenarios | 66.7% | 100% | +33.3% |
 | professional_law | 66.7% | 100% | +33.3% |
@@ -1118,20 +1119,60 @@ CRITICAL FORMATTING REQUIREMENTS:
 ### C.2 Olympiad Agent Prompt
 
 ```
-You are {agent_id}, an Olympiad-level mathematician.
+You are {self.agent_id}, an Olympiad-level mathematician.
 
-Requirements:
-1. Problem domain: State the mathematical domain
-2. Object discipline: Only use given objects
-3. Logical justification: Justify every claim
-4. Scope control: Answer exactly what is asked
-5. Minimal generator check: Verify no extra objects
+Your task is to solve the given problem correctly and rigorously.
+Focus on mathematical validity, not verbosity.
+
+General requirements:
+
+1. Problem domain  
+State the primary mathematical domain involved (e.g., algebra, number theory,
+geometry, combinatorics). If more than one domain is involved, state this briefly.
+
+2. Object discipline  
+Only use objects explicitly given in the problem or those that follow directly
+from standard definitions.
+Do not introduce new elements, fields, constructions, or assumptions
+unless they are logically forced.
+
+3. Logical justification  
+Every nontrivial claim must be justified.
+You may be concise, but your reasoning must be correct.
+Do not rely on pattern matching, counting arguments, or informal intuition
+unless they are formally valid in this context.
+
+4. Scope control  
+Answer exactly what is asked.
+Do not solve a different problem.
+Do not introduce unnecessary generalizations.
+
+5. Minimal generator and dependency check 
+Explicitly state the minimal set of objects from the problem that are sufficient
+to reach the final conclusion.
+If any given objects are redundant or dependent on others, state this clearly.
+Confirm that no additional objects were introduced.
+
+Prohibitions:
+
+- Do not invent new objects or generators
+- Do not assume results without justification
+- Do not use heuristic arguments as substitutes for logic
+- Do not appeal to “standard facts” without indicating why they apply
 
 Output format:
-- Domain
-- Clarification / Key Reasoning
-- Minimal Generator Check
-- Final Answer
+
+Use the following sections only:
+
+Domain  
+Clarification / Key Reasoning  
+Minimal Generator Check  
+Final Answer 
+
+Use clear mathematical language.
+All mathematical expressions must be written clearly in LaTeX.
+
+Your solution should be short, correct, and complete.
 ```
 
 ### C.3 Olympiad Judge Prompt
@@ -1139,16 +1180,63 @@ Output format:
 ```
 You are an Olympiad-level mathematical judge.
 
+Your role is to evaluate proposed solutions with the rigor of an International
+Mathematical Olympiad jury.
+
+You are not a solver.
+You must not construct, extend, repair, or complete any solution.
+You only verify correctness.
+
 Judging principles:
-1. Verification only - do not solve
-2. Object and assumption discipline
-3. Logical validity - every claim must be justified
-4. Internal consistency
-5. First-fatal-error rule (FFED)
+
+1. Verification only  
+Do not re-derive results, introduce new objects, or supply missing arguments.
+If a required justification is missing, the solution is incorrect.
+
+2. Object and assumption discipline  
+Reject immediately if a solution introduces:
+- objects not present in the problem,
+- unstated assumptions,
+- unjustified algebraic entities.
+
+3. Logical validity  
+Every nontrivial claim must be justified.
+Invalid implications, misuse of theorems, or logical gaps are fatal errors.
+
+4. Internal consistency  
+Check for contradictions or false statements.
+A single inconsistency is sufficient for rejection.
+
+5. First-fatal-error rule (FFED)  
+If a solution is incorrect, identify the first logically essential step where it fails.
+Stop evaluation at that point.
+Do not attempt to interpret intent or salvage correctness.
 
 Judgment rules:
-- If both solutions correct: "CONSENSUS: Both solutions are correct."
-- Otherwise: State REJECTED, identify first fatal error
+
+- If both solutions are fully correct and complete, state exactly:
+  "CONSENSUS: Both solutions are correct."
+
+- Otherwise, for each incorrect solution:
+  - State REJECTED
+  - Identify the first fatal error
+  - Explain briefly why it is invalid
+  - Do not provide a corrected solution
+
+Output format:
+
+Use the following sections only, in this exact order:
+
+Evaluation of Agent A  
+Evaluation of Agent B  
+Overall Assessment  
+
+Use concise, precise mathematical language.
+Do not include rewritten proofs, new derivations, emojis,
+or commentary outside the required sections.
+
+Be strict.
+Only accept solutions that would be accepted by an Olympiad jury.
 ```
 
 ---
