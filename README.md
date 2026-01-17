@@ -51,6 +51,15 @@ Mediated Debate (Ours):      94.7% accuracy on MMLU
 Improvement:                 +2.9% absolute gain
 ```
 
+### Documentation Guide
+
+| Document | Purpose | Key Sections |
+|----------|---------|--------------|
+| **[README.md](README.md)** | Quick reference & setup guide | Architecture, Quick Start, Evaluation Results |
+| **[FINAL_REPORT_WRITING.md](FINAL_REPORT_WRITING.md)** | Comprehensive academic report (17 sections) | Related Work, Evaluation & Discussion, Critical Self-Assessment |
+| **[COSC3009_Final_Report.md](COSC3009_Final_Report.md)** | Detailed methodology | Formal definitions, concrete debate examples |
+| **[Architecture_Explanation.md](Architecture_Explanation.md)** | Visual architecture guide | Mermaid diagrams, topology comparison |
+
 ---
 
 ## Research Overview
@@ -712,6 +721,33 @@ flowchart LR
 | **Consensus Quality** | Agreement-based | Correctness-based | Improved |
 | **Average Rounds to Converge** | 1.5 | 2.1 | Slightly more |
 
+### Key Insights from Evaluation
+
+```mermaid
+flowchart LR
+    subgraph Strengths["Our Approach Strengths"]
+        S1["Architectural Simplicity"]
+        S2["Scalability"]
+        S3["Robustness"]
+        S4["Interpretability"]
+    end
+
+    subgraph Limitations["Known Limitations"]
+        L1["Sample Size (n=3)"]
+        L2["Model Dependence"]
+        L3["Judge as Single Point"]
+    end
+
+    Strengths --> |"Outweighs"| Limitations
+
+    style S1 fill:#d3f9d8,stroke:#2f9e44
+    style S2 fill:#d3f9d8,stroke:#2f9e44
+    style S3 fill:#d3f9d8,stroke:#2f9e44
+    style S4 fill:#d3f9d8,stroke:#2f9e44
+```
+
+**For detailed analysis, see [FINAL_REPORT_WRITING.md](FINAL_REPORT_WRITING.md) Section 11: Evaluation & Discussion.**
+
 ---
 
 ## Quick Start
@@ -797,10 +833,10 @@ python eval_mmlu.py
 │   ├── standard/               # Standard debate logs (JSON)
 │   └── mediated/               # Mediated debate logs (JSON)
 │
-├── COSC3009_Final_Report.md    # Academic report
-├── Architecture_Explanation.md # Architecture documentation
-├── FINAL_REPORT_WRITING.md     # Comprehensive final report
-└── README.md                   # This file
+├── COSC3009_Final_Report.md    # Academic report (detailed methodology)
+├── Architecture_Explanation.md # Architecture documentation (visual diagrams)
+├── FINAL_REPORT_WRITING.md     # Comprehensive final report (17 sections with full analysis)
+└── README.md                   # This file (quick reference)
 ```
 
 ---
