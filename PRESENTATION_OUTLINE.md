@@ -69,30 +69,22 @@ Team:
 - Center arrow showing transformation with "+13% accuracy" callout
 - Attribution: Du et al. (2023)
 
-**Diagram:**
-```
-THE PROMISE OF COLLECTIVE INTELLIGENCE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**Diagram (Mermaid):**
+```mermaid
+flowchart LR
+    subgraph Single["SINGLE AGENT"]
+        LLM["🧠 LLM"]
+    end
 
-┌─────────────────────────┐              ┌─────────────────────────┐
-│                         │              │                         │
-│    SINGLE AGENT         │              │   MULTI-AGENT DEBATE    │
-│                         │              │                         │
-│      ┌───────┐          │              │    ┌───┐     ┌───┐     │
-│      │  LLM  │          │    ──────►   │    │ A │◄───►│ B │     │
-│      └───────┘          │              │    └───┘     └───┘     │
-│                         │              │        ╲     ╱         │
-│    Limited by           │              │         ╲   ╱          │
-│    individual bias      │              │        ┌───┐           │
-│                         │              │        │ C │           │
-│                         │              │        └───┘           │
-│                         │              │                         │
-│                         │              │    +13% Accuracy        │
-│                         │              │    (Du et al., 2023)    │
-└─────────────────────────┘              └─────────────────────────┘
+    subgraph Multi["MULTI-AGENT DEBATE"]
+        A["Agent A"] <--> B["Agent B"]
+        A <--> C["Agent C"]
+        B <--> C
+    end
 
-         "Two heads are better than one" - Applied to AI
+    Single -->|"+13% Accuracy"| Multi
 ```
+> *"Two heads are better than one" - Applied to AI (Du et al., 2023)*
 
 **Script/Key Points:**
 - "The premise is intuitive: just as humans benefit from debate and peer review, AI models can improve through multi-agent collaboration."
@@ -115,30 +107,28 @@ THE PROMISE OF COLLECTIVE INTELLIGENCE
 - RED warning accent colors
 - Final panel shows convergence on WRONG answer with ❌
 
-**Diagram:**
+**Diagram (Mermaid):**
+```mermaid
+flowchart LR
+    subgraph R0["ROUND 0"]
+        A1["Agent A: 2+2=5<br/>✓ Confident<br/>✗ WRONG"]
+        B1["Agent B: 2+2=4<br/>? Uncertain<br/>✓ CORRECT"]
+    end
+
+    subgraph R1["ROUND 1"]
+        Think["Agent B thinks:<br/>'A sounds confident...'"]
+    end
+
+    subgraph Result["RESULT"]
+        Both["BOTH: 2+2=5<br/>❌ WRONG"]
+    end
+
+    R0 --> R1 --> Result
+
+    style A1 fill:#ffcccc
+    style Both fill:#ff6666
 ```
-THE SYCOPHANCY PROBLEM
-━━━━━━━━━━━━━━━━━━━━━━
-
-Also known as: Social Conformity Bias | Disagreement Collapse | Echo Chamber Effect
-
-┌─────────────────────┐    ┌─────────────────────┐    ┌─────────────────────┐
-│      ROUND 0        │    │      ROUND 1        │    │      RESULT         │
-│   Initial Answers   │    │   Peer Influence    │    │   False Consensus   │
-├─────────────────────┤    ├─────────────────────┤    ├─────────────────────┤
-│                     │    │                     │    │                     │
-│  Agent A: "2+2=5"   │    │  Agent B thinks:    │    │                     │
-│  ▲ Confident        │───►│  "A sounds so       │───►│  BOTH: "2+2=5"      │
-│  ▲ But WRONG        │    │   confident..."     │    │                     │
-│                     │    │                     │    │      ❌ WRONG        │
-│  Agent B: "2+2=4"   │    │  Agent B revises:   │    │                     │
-│  ▼ Uncertain        │    │  "Maybe A is right" │    │  Echo Chamber       │
-│  ▼ But CORRECT      │    │                     │    │  Activated          │
-│                     │    │                     │    │                     │
-└─────────────────────┘    └─────────────────────┘    └─────────────────────┘
-
-              ⚠️  CONFIDENCE MIMICRY + SOCIAL PRESSURE = SYSTEMATIC ERROR
-```
+> ⚠️ **CONFIDENCE MIMICRY + SOCIAL PRESSURE = SYSTEMATIC ERROR**
 
 **Script/Key Points:**
 - "Here's the critical flaw: **Sycophancy** - when agents abandon correct answers to agree with confident peers."
@@ -220,36 +210,29 @@ SPECIFIC OBJECTIVES:
 - Academic citation formatting
 - Arrows showing intellectual progression
 
-**Diagram:**
-```
-RESEARCH LANDSCAPE: POSITIONING OUR CONTRIBUTION
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**Diagram (Mermaid):**
+```mermaid
+flowchart LR
+    subgraph F["FOUNDATION"]
+        Du["Du et al. 2023<br/>Multi-agent debate<br/>+13% accuracy"]
+    end
 
-    FOUNDATION              PROBLEM IDENTIFIED           OUR CONTRIBUTION
-        │                          │                           │
-        ▼                          ▼                           ▼
-┌───────────────┐          ┌───────────────┐          ┌───────────────┐
-│               │          │               │          │               │
-│  Du et al.    │          │  Hu et al.    │          │  THIS WORK    │
-│  (2023)       │─────────►│  (2025)       │─────────►│               │
-│               │          │               │          │               │
-│  "Multi-agent │          │  "Agreement   │          │  "Judge as    │
-│   debate      │          │   can hurt    │          │   structural  │
-│   improves    │          │   accuracy"   │          │   solution"   │
-│   reasoning"  │          │               │          │               │
-│               │          │  Identified   │          │  Eliminates   │
-│  +13% on      │          │  sycophancy   │          │  the problem  │
-│  benchmarks   │          │  degradation  │          │  by design    │
-│               │          │               │          │               │
-└───────────────┘          └───────────────┘          └───────────────┘
+    subgraph P["PROBLEM"]
+        Hu["Hu et al. 2025<br/>Agreement can<br/>hurt accuracy"]
+    end
 
-ADDITIONAL THEORETICAL FOUNDATIONS:
-┌──────────────────────────────────────────────────────────────────────┐
-│  • Asch (1951): Human conformity under social pressure              │
-│  • Kahneman (2011): System 1/2 thinking and cognitive biases        │
-│  • RLHF Literature: Why LLMs are trained to be "agreeable"          │
-└──────────────────────────────────────────────────────────────────────┘
+    subgraph S["OUR SOLUTION"]
+        Us["THIS WORK<br/>Judge as structural<br/>solution"]
+    end
+
+    Du --> Hu --> Us
+
+    style Du fill:#e6f3ff
+    style Hu fill:#fff3e6
+    style Us fill:#e6ffe6
 ```
+
+**Additional Foundations:** Asch (1951) conformity • Kahneman System 1/2 • RLHF Literature
 
 **Script/Key Points:**
 - "Let me position our work within the research landscape."
@@ -276,45 +259,25 @@ ADDITIONAL THEORETICAL FOUNDATIONS:
 - Formal notation with variable definitions
 - Deep blue academic styling
 
-**Diagram:**
+**Diagram (Mermaid):**
+```mermaid
+stateDiagram-v2
+    direction LR
+    Correct: ✓ CORRECT (t-1)
+    Incorrect: ✗ INCORRECT (t)
+
+    Correct --> Incorrect: Peer Exposure<br/>+ Confidence Signals
+
+    note right of Incorrect
+        SYCOPHANCY EVENT
+        Requires direct peer exposure
+    end note
 ```
-FORMAL DEFINITION: SYCOPHANCY AS STATE TRANSITION
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-DEFINITION (Sycophancy Event):
-
-An agent Aᵢ exhibits sycophancy at time t when:
-
-┌─────────────────────────────────────────────────────────────────────┐
-│                                                                     │
-│   Sycophancy(Aᵢ, t) = 1   ⟺   ALL THREE CONDITIONS HOLD:          │
-│                                                                     │
-│      (1)  Correct(Aᵢ, t-1) = True      Agent was correct before    │
-│      (2)  Correct(Aᵢ, t)   = False     Agent is now incorrect      │
-│      (3)  Agree(Aᵢ, Aⱼ, t) = True      Agent agrees with peer      │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
-
-FORMAL REPRESENTATION:
-
-    Sycophancy(Aᵢ, t) = 𝟙[Correct(Aᵢ, t-1) ∧ ¬Correct(Aᵢ, t) ∧ Agree(Aᵢ, Aⱼ, t)]
-
-STATE TRANSITION DIAGRAM:
-
-         ┌──────────────┐                        ┌──────────────┐
-         │              │    Peer Exposure       │              │
-         │   CORRECT    │ ──────────────────────►│  INCORRECT   │
-         │   (t - 1)    │   + Confidence         │    (t)       │
-         │              │     Signals            │              │
-         └──────────────┘                        └──────────────┘
-                │                                       │
-                │            SYCOPHANCY                 │
-                │              EVENT                    │
-                └───────────────────────────────────────┘
-
-KEY INSIGHT: This transition REQUIRES direct peer exposure.
-             No exposure → No sycophancy.
-```
+**Formal Definition:**
+> Sycophancy(Aᵢ, t) = 𝟙[Correct(Aᵢ, t-1) ∧ ¬Correct(Aᵢ, t) ∧ Agree(Aᵢ, Aⱼ, t)]
+>
+> **KEY INSIGHT:** No exposure → No sycophancy
 
 **Script/Key Points:**
 - "Let me formalize what sycophancy actually means mathematically."
@@ -340,46 +303,24 @@ $$\text{Sycophancy}(A_i, t) = \mathbb{1}[\text{Correct}(A_i, t-1) \land \neg\tex
 - "No Direct Contact" prominently labeled
 - Temperature annotations
 
-**Diagram:**
-```
-JUDGE-MEDIATED ARCHITECTURE (Star Topology)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**Diagram (Mermaid):**
+```mermaid
+flowchart TB
+    J["🔷 JUDGE<br/>Temp: 0.3<br/>Arbitrator"]
+    A["Agent A<br/>Temp: 0.7<br/>Solver"]
+    B["Agent B<br/>Temp: 0.7<br/>Solver"]
 
-                        ┌─────────────────────┐
-                        │                     │
-                        │       JUDGE         │
-                        │                     │
-                        │   Temperature: 0.3  │◄── Low temp for
-                        │   Role: Arbitrator  │    consistent evaluation
-                        │                     │
-                        └──────────┬──────────┘
-                                   │
-                    ┌──────────────┴──────────────┐
-                    │                             │
-                    ▼                             ▼
-           ┌───────────────┐             ┌───────────────┐
-           │               │             │               │
-           │   AGENT A     │             │   AGENT B     │
-           │               │             │               │
-           │  Temp: 0.7    │             │  Temp: 0.7    │
-           │  Role: Solver │             │  Role: Solver │
-           │               │             │               │
-           └───────────────┘             └───────────────┘
-                    │                             │
-                    │     ╔═══════════════╗       │
-                    └────►║  NO DIRECT    ║◄──────┘
-                          ║   CONTACT     ║
-                          ╚═══════════════╝
+    J <--> A
+    J <--> B
+    A x--x B
 
-UPDATE RULE:
-┌─────────────────────────────────────────────────────────────────────┐
-│                                                                     │
-│   Rᵢ^(t+1) = LLMᵢ(q, Rᵢ^(t), Judge(R₁^(t), R₂^(t), ..., Rₙ^(t)))  │
-│                                                                     │
-│   Agents receive ONLY judge feedback, never peer answers.          │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
+    style J fill:#1e3a5f,color:#fff
+    style A fill:#2d8b8b,color:#fff
+    style B fill:#2d8b8b,color:#fff
 ```
+> **NO DIRECT CONTACT** between agents - all communication through Judge
+
+**Update Rule:** Rᵢ^(t+1) = LLMᵢ(q, Rᵢ^(t), Judge(R₁^(t), R₂^(t)))
 
 **Script/Key Points:**
 - "Our solution: the **Judge-Mediated Architecture**, implemented as a Star Topology."
@@ -406,44 +347,34 @@ UPDATE RULE:
 - Connection formulas and vulnerability analysis
 - Results preview at bottom
 
-**Diagram:**
+**Diagram (Mermaid):**
+```mermaid
+flowchart LR
+    subgraph Mesh["MESH TOPOLOGY ❌"]
+        direction TB
+        MA["Agent A"] <--> MB["Agent B"]
+        MA <--> MC["Agent C"]
+        MB <--> MC
+    end
+
+    subgraph Star["STAR TOPOLOGY ✓"]
+        direction TB
+        SJ["JUDGE"]
+        SA["Agent A"]
+        SB["Agent B"]
+        SJ <--> SA
+        SJ <--> SB
+    end
+
+    Mesh -.->|"+2.9%"| Star
 ```
-ARCHITECTURAL COMPARISON: WHY TOPOLOGY MATTERS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-      MESH TOPOLOGY                           STAR TOPOLOGY
-      (Standard Debate)                       (Our Solution)
-      ─────────────────                       ─────────────────
-
-           Agent A                                  JUDGE
-             ╱╲                                       │
-            ╱  ╲                               ┌──────┴──────┐
-           ╱    ╲                              │             │
-       Agent B ─── Agent C                  Agent A      Agent B
-
-
-      PROPERTIES:                            PROPERTIES:
-      ────────────                           ────────────
-
-      Connections: n(n-1)/2                  Connections: 2n
-      (grows quadratically)                  (grows linearly)
-
-      ❌ Direct peer exposure                 ✓ Filtered feedback only
-      ❌ Confidence signals visible           ✓ No peer answers shared
-      ❌ Social pressure loops                ✓ Independent revision
-      ❌ Sycophancy vectors: HIGH             ✓ Sycophancy vectors: ZERO
-
-
-      RESULT                                 RESULT
-      ──────                                 ──────
-
-      91.8% accuracy                         94.7% accuracy
-                                                    (+2.9%)
-      ┌─────────────────────────────────────────────────────────────┐
-      │  Each mesh edge is a potential sycophancy attack vector.   │
-      │  Star topology eliminates ALL such vectors by design.       │
-      └─────────────────────────────────────────────────────────────┘
-```
+| Property | Mesh | Star |
+|----------|------|------|
+| Connections | n(n-1)/2 | 2n |
+| Peer Exposure | ❌ Direct | ✓ Filtered |
+| Sycophancy Risk | HIGH | ZERO |
+| **Result** | **91.8%** | **94.7%** |
 
 **Script/Key Points:**
 - "This comparison captures our core insight."
@@ -472,50 +403,25 @@ ARCHITECTURAL COMPARISON: WHY TOPOLOGY MATTERS
 - Show: User → Agent Manager → SmartClient → Models
 - Emphasis on the "SmartClient" as intelligent middleware
 
-**Diagram:**
-```
-LOGICAL SYSTEM DESIGN
-━━━━━━━━━━━━━━━━━━━━━
+**Diagram (Mermaid):**
+```mermaid
+flowchart TB
+    subgraph Presentation["PRESENTATION LAYER"]
+        UI["Interactive Debate Interface"]
+    end
 
-Our system implements the Judge-Mediated Architecture with robust experimental infrastructure.
+    subgraph Orchestration["ORCHESTRATION LAYER"]
+        DM["Debate Manager"] <--> AC["Agent Controller"]
+    end
 
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         PRESENTATION LAYER                              │
-│  ┌───────────────────────────────────────────────────────────────────┐ │
-│  │                    Interactive Debate Interface                    │ │
-│  │         (Problem selection, visualization, result export)         │ │
-│  └───────────────────────────────────────────────────────────────────┘ │
-└────────────────────────────────────┬────────────────────────────────────┘
-                                     │
-                                     ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         ORCHESTRATION LAYER                             │
-│  ┌─────────────────────────┐    ┌─────────────────────────────────────┐│
-│  │     Debate Manager      │◄──►│         Agent Controller            ││
-│  │  ───────────────────    │    │  ─────────────────────────────────  ││
-│  │  • Round management     │    │  • DebateAgent instantiation        ││
-│  │  • Mode selection       │    │  • JudgeAgent coordination          ││
-│  │  • History tracking     │    │  • Message routing (Star Topology)  ││
-│  └─────────────────────────┘    └─────────────────────────────────────┘│
-└────────────────────────────────────┬────────────────────────────────────┘
-                                     │
-                                     ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                    INTELLIGENT INFERENCE LAYER                          │
-│  ┌───────────────────────────────────────────────────────────────────┐ │
-│  │                       SmartClient                                  │ │
-│  │  ─────────────────────────────────────────────────────────────    │ │
-│  │  Adaptive inference routing with automatic failover               │ │
-│  │                                                                    │ │
-│  │     ┌──────────┐      ┌──────────┐      ┌──────────┐             │ │
-│  │     │  Cloud   │ ───► │  Local   │ ───► │  Fallback│             │ │
-│  │     │  Models  │      │  Models  │      │   Mode   │             │ │
-│  │     └──────────┘      └──────────┘      └──────────┘             │ │
-│  │                                                                    │ │
-│  │  GUARANTEE: Experiment never crashes. Data always valid.          │ │
-│  └───────────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────────────┘
+    subgraph Inference["INTELLIGENT INFERENCE LAYER"]
+        SC["SmartClient"]
+        Cloud["☁️ Cloud"] --> Local["💻 Local"] --> FB["🔄 Fallback"]
+    end
+
+    Presentation --> Orchestration --> Inference
 ```
+> **GUARANTEE:** Experiment never crashes. Data always valid.
 
 **Script/Key Points:**
 - "Let me walk you through our system's logical design."
@@ -542,54 +448,25 @@ Our system implements the Judge-Mediated Architecture with robust experimental i
 - Decision tree: CONSENSUS vs REJECTED
 - Mathematical objective function
 
-**Diagram:**
+**Diagram (Mermaid):**
+```mermaid
+flowchart TB
+    Receive["📥 Receive Solutions<br/>from Agent A & B"]
+    FFED["🔍 Apply First-Fatal<br/>Error Rule (FFED)"]
+    Consensus["✅ CONSENSUS<br/>Both proofs valid"]
+    Rejected["❌ REJECTED<br/>Fatal error detected"]
+
+    Receive --> FFED
+    FFED --> Consensus
+    FFED --> Rejected
+
+    style Consensus fill:#c8e6c9
+    style Rejected fill:#ffcdd2
 ```
-THE JUDGE ALGORITHM: OLYMPIAD MODE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Inspired by International Mathematical Olympiad evaluation standards.
+**Judge Config:** Temp 0.3 | Verification ONLY | Olympiad-grade rigor
 
-JUDGE CONFIGURATION:
-┌─────────────────────────────────────────────────────────────────────────┐
-│  Temperature: 0.3        Ensures consistent, deterministic evaluation  │
-│  Role: Verification ONLY  Judge never solves - only evaluates          │
-│  Standard: Olympiad-grade  Competition-level rigor                      │
-└─────────────────────────────────────────────────────────────────────────┘
-
-EVALUATION ALGORITHM:
-
-                    ┌─────────────────────┐
-                    │  Receive Solutions  │
-                    │  from Agent A & B   │
-                    └──────────┬──────────┘
-                               │
-                               ▼
-                    ┌─────────────────────┐
-                    │  Apply First-Fatal  │
-                    │  Error Rule (FFED)  │◄──── KEY INNOVATION:
-                    └──────────┬──────────┘      A single logical flaw
-                               │                 is sufficient for
-                               │                 rejection
-                    ┌──────────┴──────────┐
-                    │                     │
-                    ▼                     ▼
-           ┌───────────────┐     ┌───────────────┐
-           │   CONSENSUS   │     │   REJECTED    │
-           │               │     │               │
-           │  Both proofs  │     │  Fatal error  │
-           │  logically    │     │  detected in  │
-           │  valid        │     │  reasoning    │
-           └───────────────┘     └───────────────┘
-
-OBJECTIVE FUNCTION:
-┌─────────────────────────────────────────────────────────────────────────┐
-│                                                                         │
-│   Judge(·) = argmax_f [ LogicalCorrectness(f) - λ·PrematureAgreement(f)]│
-│                                                                         │
-│   Where λ > 0 penalizes premature agreement, encouraging truth-seeking │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
-```
+**Objective:** Judge(·) = argmax[ LogicalCorrectness - λ·PrematureAgreement ]
 
 **Script/Key Points:**
 - "The Judge operates in **Olympiad Mode** - inspired by International Mathematical Olympiad standards."
@@ -616,53 +493,25 @@ OBJECTIVE FUNCTION:
 - Emphasis on WHY this matters for research validity
 - "Never Crashes" as research enabler
 
-**Diagram:**
+**Diagram (Mermaid):**
+```mermaid
+flowchart LR
+    P1["☁️ CLOUD<br/>Best quality"]
+    P2["💻 LOCAL<br/>Good quality"]
+    P3["🔄 FALLBACK<br/>Guaranteed"]
+
+    P1 -->|"Auth/Rate Error"| P2
+    P2 -->|"Timeout Error"| P3
+
+    style P1 fill:#e3f2fd
+    style P2 fill:#fff3e0
+    style P3 fill:#e8f5e9
 ```
-HYBRID INFERENCE STRATEGY: THE SMARTCLIENT ALGORITHM
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-PURPOSE: Ensure experimental reliability across 171 MMLU questions.
-
-THE CHALLENGE:
-┌─────────────────────────────────────────────────────────────────────────┐
-│  Research experiments must complete fully to produce valid results.    │
-│  API failures, rate limits, or timeouts would invalidate our data.     │
-│  We need GUARANTEED completion without compromising accuracy.           │
-└─────────────────────────────────────────────────────────────────────────┘
-
-SMARTCLIENT ROUTING ALGORITHM:
-
-    ┌─────────────────────────────────────────────────────────────────────┐
-    │                         SmartClient                                 │
-    │  ─────────────────────────────────────────────────────────────────  │
-    │                                                                     │
-    │   function generate(prompt):                                        │
-    │       try:                                                          │
-    │           return CloudProvider.call(prompt)    # Highest accuracy   │
-    │       except (AuthError, RateLimitError):                          │
-    │           try:                                                      │
-    │               return LocalProvider.call(prompt) # Still accurate   │
-    │           except (TimeoutError, ConnectionError):                  │
-    │               return FallbackMode.generate(prompt) # Guaranteed    │
-    │                                                                     │
-    └─────────────────────────────────────────────────────────────────────┘
-
-PROVIDER HIERARCHY:
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│    PRIORITY 1   │    │    PRIORITY 2   │    │    PRIORITY 3   │
-│   Cloud Models  │───►│   Local Models  │───►│  Fallback Mode  │
-│                 │    │                 │    │                 │
-│  • Best quality │    │  • Good quality │    │  • Guaranteed   │
-│  • API-dependent│    │  • Self-hosted  │    │  • Context-aware│
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-
-RESEARCH IMPLICATION:
-┌─────────────────────────────────────────────────────────────────────────┐
-│  ✓ All 171 MMLU questions completed without failure                    │
-│  ✓ No data loss due to infrastructure issues                           │
-│  ✓ Results are valid and reproducible                                  │
-└─────────────────────────────────────────────────────────────────────────┘
-```
+**Research Implication:**
+- ✓ All 171 MMLU questions completed without failure
+- ✓ No data loss due to infrastructure issues
+- ✓ Results are valid and reproducible
 
 **Script/Key Points:**
 - "The SmartClient isn't just infrastructure - it's an **algorithm that ensures research validity.**"
@@ -690,77 +539,31 @@ RESEARCH IMPLICATION:
 - Show context-aware response generation
 - "Data Validity" as the outcome
 
-**Diagram:**
+**Diagram (Mermaid):**
+```mermaid
+flowchart TB
+    API["📤 API Request"]
+    Primary["Primary Provider"]
+    Success["✅ Return Response"]
+    Error["⚠️ Error Detected"]
+    Switch["🔄 Switch Provider"]
+    Local["Local Provider"]
+    Fallback["Context-Aware Fallback"]
+
+    API --> Primary
+    Primary --> Success
+    Primary --> Error
+    Error --> Switch
+    Switch --> Local
+    Local --> Success
+    Local --> Fallback
+    Fallback --> Success
+
+    style Success fill:#c8e6c9
+    style Error fill:#ffcdd2
 ```
-FAULT TOLERANCE ALGORITHM: ENSURING DATA VALIDITY
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-WHY THIS MATTERS:
-Invalid or incomplete experimental runs cannot be published.
-Our fault tolerance ensures every data point is valid.
-
-STATE MACHINE:
-
-                         ┌─────────────────┐
-                         │   API Request   │
-                         └────────┬────────┘
-                                  │
-                                  ▼
-                    ┌─────────────────────────┐
-                    │  Primary Provider Call  │
-                    └─────────────┬───────────┘
-                                  │
-                    ┌─────────────┴─────────────┐
-                    │                           │
-              SUCCESS                      ERROR DETECTED
-                    │                           │
-                    ▼                           ▼
-              ┌───────────┐          ┌───────────────────────┐
-              │  Return   │          │   Error Classification │
-              │  Response │          └───────────┬───────────┘
-              └───────────┘                      │
-                                    ┌────────────┼────────────┐
-                                    │            │            │
-                                    ▼            ▼            ▼
-                              ┌─────────┐  ┌─────────┐  ┌─────────┐
-                              │  Auth   │  │  Rate   │  │ Timeout │
-                              │  Error  │  │  Limit  │  │  Error  │
-                              └────┬────┘  └────┬────┘  └────┬────┘
-                                   │            │            │
-                                   └────────────┼────────────┘
-                                                │
-                                                ▼
-                                   ┌────────────────────────┐
-                                   │   Switch Provider      │
-                                   │   (Automatic Failover) │
-                                   └─────────────┬──────────┘
-                                                 │
-                              ┌──────────────────┴──────────────────┐
-                              │                                     │
-                     LOCAL SUCCEEDS                         LOCAL FAILS
-                              │                                     │
-                              ▼                                     ▼
-                    ┌─────────────────┐               ┌─────────────────────┐
-                    │ Return Response │               │ Context-Aware       │
-                    └─────────────────┘               │ Fallback Generation │
-                                                      └──────────┬──────────┘
-                                                                 │
-                              CONTEXT DETECTION:                 │
-                              ┌──────────────────────────────────┴───────┐
-                              │  • "judge" context  → Judge-style output │
-                              │  • "critique" context → Critique output  │
-                              │  • Math context → Step-by-step solution  │
-                              └──────────────────────────────────────────┘
-
-OUTCOME:
-┌─────────────────────────────────────────────────────────────────────────┐
-│                                                                         │
-│   ✓ GUARANTEED RESPONSE: System NEVER crashes during evaluation        │
-│   ✓ DATA VALIDITY: Every experimental data point is complete           │
-│   ✓ REPRODUCIBILITY: Results can be verified by other researchers      │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
-```
+**Outcome:** ✓ Guaranteed Response | ✓ Data Validity | ✓ Reproducibility
 
 **Script/Key Points:**
 - "This fault tolerance algorithm ensures our research data is valid."
@@ -993,59 +796,32 @@ PERFORMANCE DISTRIBUTION (Mediated Debate):
 - Show social pressure loop being broken
 - Clear mechanistic explanation
 
-**Diagram:**
+**Diagram (Mermaid) - Standard Debate (Problem):**
+```mermaid
+flowchart LR
+    subgraph Problem["STANDARD DEBATE ❌"]
+        A1["Agent A<br/>Confident WRONG"] <-->|"Direct Exposure"| B1["Agent B<br/>Uncertain RIGHT"]
+    end
+    B1 --> Syc["❌ SYCOPHANCY<br/>B abandons correct answer"]
+
+    style A1 fill:#ffcdd2
+    style Syc fill:#ff6666
 ```
-WHY IT WORKS: BREAKING THE SOCIAL PRESSURE LOOP
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-STANDARD DEBATE: The Problem
-────────────────────────────
+**Diagram (Mermaid) - Mediated Debate (Solution):**
+```mermaid
+flowchart TB
+    subgraph Solution["MEDIATED DEBATE ✅"]
+        A2["Agent A"] --> J["🔷 JUDGE"]
+        B2["Agent B"] --> J
+        J --> FA["Feedback to A<br/>(no B info)"]
+        J --> FB["Feedback to B<br/>(no A info)"]
+    end
+    FA --> Ind["✅ INDEPENDENT REASONING"]
+    FB --> Ind
 
-      Agent A                              Agent B
-   ┌───────────┐                        ┌───────────┐
-   │ Answer: X │◄──────────────────────►│ Answer: Y │
-   │           │     DIRECT EXPOSURE    │           │
-   │ Confident │     • See peer answer  │ Uncertain │
-   │ but WRONG │     • See confidence   │ but RIGHT │
-   └───────────┘                        └───────────┘
-         │                                    │
-         │         SOCIAL PRESSURE            │
-         │              LOOP                  │
-         └──────────────┬─────────────────────┘
-                        │
-                        ▼
-                  ❌ SYCOPHANCY
-              (B abandons correct answer)
-
-
-MEDIATED DEBATE: The Solution
-─────────────────────────────
-
-      Agent A                              Agent B
-   ┌───────────┐                        ┌───────────┐
-   │ Answer: X │                        │ Answer: Y │
-   │           │    ╔════════════════╗  │           │
-   │           │    ║   NO DIRECT    ║  │           │
-   │           │    ║    CONTACT     ║  │           │
-   └─────┬─────┘    ╚════════════════╝  └─────┬─────┘
-         │                                    │
-         │         ┌───────────────┐          │
-         └────────►│     JUDGE     │◄─────────┘
-                   │   (Neutral)   │
-                   └───────┬───────┘
-                           │
-              ┌────────────┴────────────┐
-              ▼                         ▼
-      ┌─────────────┐           ┌─────────────┐
-      │  Feedback   │           │  Feedback   │
-      │  to A only  │           │  to B only  │
-      │ (no B info) │           │ (no A info) │
-      └─────────────┘           └─────────────┘
-              │                         │
-              └───────────┬─────────────┘
-                          ▼
-                 ✅ INDEPENDENT REASONING
-                (Each agent improves on merit)
+    style J fill:#1e3a5f,color:#fff
+    style Ind fill:#c8e6c9
 ```
 
 **Script/Key Points:**
@@ -1074,54 +850,31 @@ MEDIATED DEBATE: The Solution
 - Future work roadmap
 - Take-home message prominently displayed
 
-**Diagram:**
+**Key Contributions:**
+1. **FORMALIZED** sycophancy as state transition requiring direct peer exposure
+2. **PROPOSED** Judge-Mediated Architecture (Star Topology)
+3. **ACHIEVED** 94.7% accuracy (+2.9% over baseline)
+4. **DEMONSTRATED** structural > prompting solutions
+5. **BUILT** robust, reproducible experimental infrastructure
+
+**Diagram (Mermaid) - Future Work:**
+```mermaid
+flowchart LR
+    P1["Phase 1<br/>ReAct Integration"]
+    P2["Phase 2<br/>Adaptive Stopping"]
+    P3["Phase 3<br/>Multi-Modal"]
+
+    P1 --> P2 --> P3
+
+    style P1 fill:#e3f2fd
+    style P2 fill:#fff3e0
+    style P3 fill:#e8f5e9
 ```
-CONCLUSION & FUTURE WORK
-━━━━━━━━━━━━━━━━━━━━━━━━
 
-KEY CONTRIBUTIONS:
-┌─────────────────────────────────────────────────────────────────────────┐
-│                                                                         │
-│   1. FORMALIZED the sycophancy problem as a state transition           │
-│      that requires direct peer exposure                                 │
-│                                                                         │
-│   2. PROPOSED Judge-Mediated Architecture (Star Topology)              │
-│      that structurally prevents sycophancy                              │
-│                                                                         │
-│   3. ACHIEVED 94.7% accuracy on MMLU (+2.9% over baseline)             │
-│      through architecture alone, no prompt engineering                  │
-│                                                                         │
-│   4. DEMONSTRATED that structural solutions outperform                  │
-│      prompting-based approaches for bias prevention                     │
-│                                                                         │
-│   5. BUILT robust experimental infrastructure ensuring                  │
-│      reproducible, valid research results                               │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
-
-FUTURE WORK:
-┌───────────────────┐    ┌───────────────────┐    ┌───────────────────┐
-│     Phase 1       │    │     Phase 2       │    │     Phase 3       │
-│  ReAct Integration│───►│ Adaptive Stopping │───►│    Multi-Modal    │
-├───────────────────┤    ├───────────────────┤    ├───────────────────┤
-│ • Reasoning traces│    │ • Early consensus │    │ • Image reasoning │
-│ • Thought-action  │    │ • Cost-quality    │    │ • Code execution  │
-│   interleaving    │    │   tradeoffs       │    │ • Tool use        │
-│ • Evidence-based  │    │ • Wald sequential │    │ • Web retrieval   │
-│   grounding       │    │   analysis        │    │                   │
-└───────────────────┘    └───────────────────┘    └───────────────────┘
-
-TAKE-HOME MESSAGE:
-┌─────────────────────────────────────────────────────────────────────────┐
-│                                                                         │
-│   "To prevent AI systems from falling into echo chambers,              │
-│    we must STRUCTURALLY prevent peer influence -                       │
-│    not just ASK them to be independent."                               │
-│                                                                         │
-│                    ARCHITECTURE > PROMPTING                            │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
-```
+> **TAKE-HOME MESSAGE:**
+> *"To prevent AI echo chambers, we must STRUCTURALLY prevent peer influence - not just ASK them to be independent."*
+>
+> **ARCHITECTURE > PROMPTING**
 
 **Script/Key Points:**
 - "In conclusion: sycophancy is a STRUCTURAL problem requiring a STRUCTURAL solution."
