@@ -999,12 +999,10 @@ Final Answer: $15.25
 ## Demo
 
 
-![demo Hybrid Multi Agent Debate System Jan 2026]([https://example.com "Image Title"](https://github.com/user-attachments/assets/7686cf67-b5b4-4400-95d1-8f62d72585d8))
-demo Hybrid Multi Agent Debate System Jan 2026
-
-[Demo Video]([URL](https://youtu.be/90-dHwFYU7s))
 
 
+![demo Hybrid Multi Agent Debate System Jan 2026](https://github.com/user-attachments/assets/7686cf67-b5b4-4400-95d1-8f62d72585d8)
+[Demo Video](https://youtu.be/90-dHwFYU7s)
 
 
 
