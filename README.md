@@ -24,7 +24,8 @@ A Dockerized multi-agent debate system comparing **Standard Debate** (peer-to-pe
 12. [Error Handling](#error-handling)
 13. [Theoretical Framework](#theoretical-framework)
 14. [Future Enhancements](#future-enhancements)
-15. [References](#references)
+15. [Demo](#demo)
+16. [References](#references)
 
 ---
 
@@ -992,6 +993,10 @@ Thought: I can now sum the costs
 Action: Calculate $10.00 + $5.25 = $15.25
 Final Answer: $15.25
 ```
+
+---
+
+## Demo
 
 ---
 
